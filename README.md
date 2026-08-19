@@ -41,3 +41,31 @@ Run the test suite with:
 ```sh
 pytest
 ```
+
+## Docker
+
+The container stores the SQLite database and every original/display photograph
+under `/data`. The Compose configuration maps that directory to the repository's
+ignored `data/` directory, so rebuilding the image does not remove the catalogue.
+
+Build and start the application:
+
+```sh
+docker compose up --build -d
+```
+
+Open <http://127.0.0.1:8000/>. Check the container status and logs with:
+
+```sh
+docker compose ps
+docker compose logs -f
+```
+
+Stop the application without deleting its data:
+
+```sh
+docker compose down
+```
+
+Back up the complete `data/` directory to preserve the database and all original
+photographs.

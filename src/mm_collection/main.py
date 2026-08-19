@@ -77,6 +77,10 @@ def create_app(db_path: Path | None = None) -> FastAPI:
         name="media",
     )
 
+    @application.get("/health", include_in_schema=False)
+    async def health() -> dict[str, str]:
+        return {"status": "ok"}
+
     @application.get("/", response_class=HTMLResponse, name="index")
     async def index(request: Request) -> HTMLResponse:
         return templates.TemplateResponse(

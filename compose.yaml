@@ -1,0 +1,11 @@
+services:
+  mm-collection:
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    environment:
+      MM_COLLECTION_DATA_DIR: /data
+    volumes:
+      - ./data:/data
+    restart: unless-stopped

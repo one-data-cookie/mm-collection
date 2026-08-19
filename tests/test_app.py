@@ -17,6 +17,16 @@ def test_index_returns_collection_page(tmp_path):
     assert "M&amp;M Collection" in response.text
 
 
+def test_health_check(tmp_path):
+    app = create_app(tmp_path / "collection.sqlite")
+
+    with TestClient(app) as client:
+        response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
 def image_bytes(size=(80, 60), color="red"):
     output = BytesIO()
     Image.new("RGB", size, color).save(output, "JPEG", quality=95)
