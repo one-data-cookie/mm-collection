@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Manage photographs · {{ item.title }} · M&amp;M Collection</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="wordmark" href="{{ url_for('index') }}">M&amp;M Collection</a>
+      <a class="button" href="{{ url_for('item_detail', item_id=item.id) }}">Done</a>
+    </header>
+
+    <main class="page">
+      <div class="page-heading">
+        <p class="eyebrow">{{ item.title }}</p>
+        <h1>Manage photographs</h1>
+        <p>The first photograph is initially primary. You can change it or rearrange the display order here.</p>
+      </div>
+
+      {% if error %}<p class="form-error" role="alert">{{ error }}</p>{% endif %}
+
+      <section class="add-photos-panel" aria-labelledby="add-photos-heading">
+        <h2 id="add-photos-heading">Add photographs</h2>
+        <form method="post" enctype="multipart/form-data" class="add-photos-form">
+          <label>
+            <span>Select photographs</span>
+            <input type="file" name="photos" accept="image/*" multiple required>
+          </label>
+          <button class="button" type="submit">Upload photographs</button>
+        </form>
+      </section>
+
+      {% if item.photos %}
+        <section class="photo-manager" aria-label="Existing photographs">
+          {% for photo in item.photos %}
+            <article class="photo-editor">
+              <div class="photo-editor__preview">
+                <img
+                  src="{{ url_for('media', path='/' ~ photo.display_path) }}"
+                  alt="{{ photo.caption or item.title }}"
+                  loading="lazy"
+                >
+                {% if photo.is_primary %}<span class="primary-badge">Primary</span>{% endif %}
+              </div>
+
+              <form method="post" action="{{ url_for('update_photo', item_id=item.id, photo_id=photo.id) }}">
+                <label>
+                  <span>Caption</span>
+                  <textarea name="caption" rows="2">{{ photo.caption or '' }}</textarea>
+                </label>
+
+                <div class="photo-actions">
+                  <button type="submit" name="action" value="save">Save caption</button>
+                  {% if not photo.is_primary %}
+                    <button type="submit" name="action" value="primary">Make primary</button>
+                  {% endif %}
+                  <button type="submit" name="action" value="earlier" {% if loop.first %}disabled{% endif %}>Move earlier</button>
+                  <button type="submit" name="action" value="later" {% if loop.last %}disabled{% endif %}>Move later</button>
+                  <button
+                    class="danger-link"
+                    type="submit"
+                    name="action"
+                    value="delete"
+                    onclick="return confirm('Remove this photograph? This cannot be undone.')"
+                  >Remove</button>
+                </div>
+              </form>
+            </article>
+          {% endfor %}
+        </section>
+      {% else %}
+        <section class="empty-state photo-empty-state">
+          <h2>No photographs yet.</h2>
+          <p>Add one or several photographs using the form above.</p>
+        </section>
+      {% endif %}
+    </main>
+  </body>
+</html>

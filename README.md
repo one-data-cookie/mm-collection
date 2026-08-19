@@ -7,6 +7,9 @@ preserved, while smaller JPEG copies are generated for browsing. The first
 photograph is used as the object's primary image.
 
 JPEG, PNG, WebP, HEIF/HEIC, and AVIF uploads up to 30 MB each are supported.
+Existing objects and their metadata can be edited. Photographs can be added,
+captioned, reordered, made primary, or removed. Object and photograph deletion
+also removes the corresponding local files.
 
 ## Requirements
 

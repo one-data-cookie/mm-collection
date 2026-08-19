@@ -26,6 +26,12 @@ a {
   border-bottom: 1px solid #d6d0c4;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .wordmark {
   font-family: Georgia, serif;
   font-size: 1.15rem;
@@ -291,6 +297,108 @@ small {
   margin: 0;
 }
 
+.danger-zone {
+  margin-top: 3rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #d6d0c4;
+}
+
+.danger-link {
+  border: 0;
+  padding: 0;
+  color: #8b1e2f;
+  background: transparent;
+  font: inherit;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.add-photos-panel {
+  margin-bottom: 3.5rem;
+  padding: clamp(1.25rem, 4vw, 2rem);
+  background: #e9e2d6;
+}
+
+.add-photos-panel h2 {
+  margin-bottom: 1.25rem;
+}
+
+.add-photos-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: end;
+}
+
+.photo-manager {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(18rem, 100%), 1fr));
+  gap: 2rem 1.25rem;
+}
+
+.photo-editor {
+  min-width: 0;
+  background: #eee8de;
+}
+
+.photo-editor__preview {
+  position: relative;
+}
+
+.photo-editor__preview img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  background: #ded7cb;
+}
+
+.primary-badge {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.35rem 0.55rem;
+  color: #fff;
+  background: #211e1b;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.photo-editor form {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.photo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 0.9rem;
+}
+
+.photo-actions button:not(.danger-link) {
+  border: 1px solid #aaa196;
+  padding: 0.45rem 0.6rem;
+  color: inherit;
+  background: #fffdf8;
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.photo-actions button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.photo-empty-state {
+  margin-top: 1rem;
+}
+
 @media (max-width: 38rem) {
   .form-grid {
     grid-template-columns: 1fr;
@@ -306,5 +414,23 @@ small {
 
   .object-record {
     position: static;
+  }
+
+  .site-header {
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    align-items: flex-end;
+    flex-direction: column-reverse;
+    gap: 0.65rem;
+  }
+
+  .add-photos-form {
+    grid-template-columns: 1fr;
+  }
+
+  .add-photos-form .button {
+    justify-self: start;
   }
 }

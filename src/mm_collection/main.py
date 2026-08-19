@@ -13,7 +13,14 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.datastructures import UploadFile
 
-from .catalog import ITEM_FIELDS, PhotoError, create_item
+from .catalog import (
+    ITEM_FIELDS,
+    PhotoError,
+    add_photos,
+    create_item,
+    delete_item as delete_catalog_item,
+    manage_photo,
+)
 from .database import (
     apply_migrations,
     database_path,
@@ -200,6 +207,83 @@ def create_app(db_path: Path | None = None) -> FastAPI:
         return RedirectResponse(
             request.url_for("item_detail", item_id=item_id), status_code=303
         )
+
+    @application.get(
+        "/items/{item_id}/photos",
+        response_class=HTMLResponse,
+        name="manage_photos",
+    )
+    async def manage_photos_route(request: Request, item_id: int) -> HTMLResponse:
+        item = get_item(item_id, target)
+        if item is None:
+            raise HTTPException(status_code=404, detail="Object not found")
+        return templates.TemplateResponse(
+            request=request,
+            name="manage_photos.html",
+            context={"item": item, "error": None},
+        )
+
+    @application.post(
+        "/items/{item_id}/photos",
+        response_class=HTMLResponse,
+        name="add_item_photos",
+    )
+    async def add_item_photos_route(request: Request, item_id: int) -> HTMLResponse:
+        item = get_item(item_id, target)
+        if item is None:
+            raise HTTPException(status_code=404, detail="Object not found")
+
+        form = await request.form()
+        uploads = [
+            upload
+            for upload in form.getlist("photos")
+            if isinstance(upload, UploadFile) and upload.filename
+        ]
+        if not uploads:
+            return templates.TemplateResponse(
+                request=request,
+                name="manage_photos.html",
+                context={"item": item, "error": "Please select a photograph."},
+                status_code=422,
+            )
+
+        try:
+            await add_photos(target, photos, item_id, uploads)
+        except PhotoError as error:
+            return templates.TemplateResponse(
+                request=request,
+                name="manage_photos.html",
+                context={"item": item, "error": str(error)},
+                status_code=400,
+            )
+
+        return RedirectResponse(
+            request.url_for("manage_photos", item_id=item_id), status_code=303
+        )
+
+    @application.post(
+        "/items/{item_id}/photos/{photo_id}",
+        name="update_photo",
+    )
+    async def update_photo_route(
+        request: Request, item_id: int, photo_id: int
+    ) -> RedirectResponse:
+        form = await request.form()
+        action = str(form.get("action", "save"))
+        caption = str(form.get("caption", "")).strip() or None
+        if action not in {"save", "primary", "earlier", "later", "delete"}:
+            raise HTTPException(status_code=400, detail="Unknown photo action")
+        if not manage_photo(target, photos, item_id, photo_id, caption, action):
+            raise HTTPException(status_code=404, detail="Photograph not found")
+        return RedirectResponse(
+            request.url_for("manage_photos", item_id=item_id), status_code=303
+        )
+
+    @application.post("/items/{item_id}/delete", name="delete_item")
+    async def delete_item_route(request: Request, item_id: int) -> RedirectResponse:
+        if not delete_catalog_item(target, photos, item_id):
+            raise HTTPException(status_code=404, detail="Object not found")
+        return RedirectResponse(request.url_for("index"), status_code=303)
 
     return application
 

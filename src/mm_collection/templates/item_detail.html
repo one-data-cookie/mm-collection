@@ -9,7 +9,10 @@
   <body>
     <header class="site-header">
       <a class="wordmark" href="{{ url_for('index') }}">M&amp;M Collection</a>
-      <a class="button" href="{{ url_for('edit_item', item_id=item.id) }}">Edit object</a>
+      <div class="header-actions">
+        <a class="quiet-link" href="{{ url_for('manage_photos', item_id=item.id) }}">Manage photos</a>
+        <a class="button" href="{{ url_for('edit_item', item_id=item.id) }}">Edit object</a>
+      </div>
     </header>
 
     <main class="page object-detail">
@@ -72,6 +75,15 @@
             {% endif %}
             <div><dt>Added to collection</dt><dd>{{ item.date_added[:10] }}</dd></div>
           </dl>
+
+          <form
+            class="danger-zone"
+            method="post"
+            action="{{ url_for('delete_item', item_id=item.id) }}"
+            onsubmit="return confirm('Delete this object and all of its photographs? This cannot be undone.')"
+          >
+            <button class="danger-link" type="submit">Delete object</button>
+          </form>
         </article>
       </div>
     </main>

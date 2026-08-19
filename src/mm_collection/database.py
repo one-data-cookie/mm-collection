@@ -141,7 +141,7 @@ def get_item(item_id: int, path: Path | None = None) -> dict[str, object] | None
             """
             SELECT * FROM photos
             WHERE item_id = ?
-            ORDER BY is_primary DESC, position, id
+            ORDER BY position, id
             """,
             (item_id,),
         ).fetchall()

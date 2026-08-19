@@ -298,3 +298,169 @@ def test_missing_object_pages_return_404(tmp_path):
     assert detail_response.status_code == 404
     assert edit_response.status_code == 404
     assert update_response.status_code == 404
+
+
+def test_photos_can_be_added_to_an_existing_object(tmp_path):
+    database = tmp_path / "collection.sqlite"
+    app = create_app(database)
+
+    with TestClient(app) as client:
+        client.post("/items/new", data={"title": "Initially bare"})
+        response = client.post(
+            "/items/1/photos",
+            files=[
+                ("photos", ("first.jpg", image_bytes(color="red"), "image/jpeg")),
+                ("photos", ("second.jpg", image_bytes(color="blue"), "image/jpeg")),
+            ],
+            follow_redirects=False,
+        )
+        manager_page = client.get("/items/1/photos")
+
+    assert response.status_code == 303
+    assert response.headers["location"].endswith("/items/1/photos")
+    with connect(database) as connection:
+        photos = connection.execute(
+            "SELECT * FROM photos ORDER BY position"
+        ).fetchall()
+    assert len(photos) == 2
+    assert [photo["position"] for photo in photos] == [0, 1]
+    assert [photo["is_primary"] for photo in photos] == [1, 0]
+    assert all(photo["display_path"] in manager_page.text for photo in photos)
+
+
+def test_bad_photo_addition_keeps_existing_photos_and_removes_new_files(tmp_path):
+    database = tmp_path / "collection.sqlite"
+    existing_contents = image_bytes(color="green")
+    app = create_app(database)
+
+    with TestClient(app) as client:
+        client.post(
+            "/items/new",
+            data={"title": "Protected object"},
+            files={"photos": ("existing.jpg", existing_contents, "image/jpeg")},
+        )
+        response = client.post(
+            "/items/1/photos",
+            files=[
+                ("photos", ("valid.jpg", image_bytes(color="yellow"), "image/jpeg")),
+                ("photos", ("broken.txt", b"not an image", "text/plain")),
+            ],
+        )
+
+    assert response.status_code == 400
+    with connect(database) as connection:
+        photos = connection.execute("SELECT * FROM photos").fetchall()
+    assert len(photos) == 1
+    original = tmp_path / "photos" / photos[0]["original_path"]
+    assert original.read_bytes() == existing_contents
+    assert len(list((tmp_path / "photos" / "1" / "originals").iterdir())) == 1
+    assert len(list((tmp_path / "photos" / "1" / "display").iterdir())) == 1
+
+
+def test_photo_caption_primary_and_order_can_be_managed(tmp_path):
+    database = tmp_path / "collection.sqlite"
+    app = create_app(database)
+
+    with TestClient(app) as client:
+        client.post(
+            "/items/new",
+            data={"title": "Three views"},
+            files=[
+                ("photos", ("one.jpg", image_bytes(color="red"), "image/jpeg")),
+                ("photos", ("two.jpg", image_bytes(color="green"), "image/jpeg")),
+                ("photos", ("three.jpg", image_bytes(color="blue"), "image/jpeg")),
+            ],
+        )
+        with connect(database) as connection:
+            initial = connection.execute(
+                "SELECT * FROM photos ORDER BY position"
+            ).fetchall()
+        first_id, second_id, third_id = [row["id"] for row in initial]
+
+        move_response = client.post(
+            f"/items/1/photos/{third_id}",
+            data={"caption": "Blue side", "action": "earlier"},
+            follow_redirects=False,
+        )
+        primary_response = client.post(
+            f"/items/1/photos/{third_id}",
+            data={"caption": "Blue side", "action": "primary"},
+            follow_redirects=False,
+        )
+        detail_page = client.get("/items/1")
+
+    assert move_response.status_code == 303
+    assert primary_response.status_code == 303
+    with connect(database) as connection:
+        ordered = connection.execute(
+            "SELECT * FROM photos ORDER BY position"
+        ).fetchall()
+    assert [row["id"] for row in ordered] == [first_id, third_id, second_id]
+    assert [row["position"] for row in ordered] == [0, 1, 2]
+    assert [row["id"] for row in ordered if row["is_primary"]] == [third_id]
+    assert next(row for row in ordered if row["id"] == third_id)["caption"] == "Blue side"
+    assert "Blue side" in detail_page.text
+
+
+def test_removing_primary_photo_reassigns_primary_and_cleans_files(tmp_path):
+    database = tmp_path / "collection.sqlite"
+    app = create_app(database)
+
+    with TestClient(app) as client:
+        client.post(
+            "/items/new",
+            data={"title": "Two photographs"},
+            files=[
+                ("photos", ("one.jpg", image_bytes(color="red"), "image/jpeg")),
+                ("photos", ("two.jpg", image_bytes(color="blue"), "image/jpeg")),
+            ],
+        )
+        with connect(database) as connection:
+            before = connection.execute(
+                "SELECT * FROM photos ORDER BY position"
+            ).fetchall()
+        removed_original = tmp_path / "photos" / before[0]["original_path"]
+        removed_display = tmp_path / "photos" / before[0]["display_path"]
+        kept_original = tmp_path / "photos" / before[1]["original_path"]
+
+        response = client.post(
+            f"/items/1/photos/{before[0]['id']}",
+            data={"action": "delete"},
+            follow_redirects=False,
+        )
+
+    assert response.status_code == 303
+    with connect(database) as connection:
+        remaining = connection.execute("SELECT * FROM photos").fetchall()
+    assert len(remaining) == 1
+    assert remaining[0]["id"] == before[1]["id"]
+    assert remaining[0]["position"] == 0
+    assert remaining[0]["is_primary"] == 1
+    assert not removed_original.exists()
+    assert not removed_display.exists()
+    assert kept_original.exists()
+
+
+def test_object_deletion_removes_database_rows_and_photo_directory(tmp_path):
+    database = tmp_path / "collection.sqlite"
+    app = create_app(database)
+
+    with TestClient(app) as client:
+        client.post(
+            "/items/new",
+            data={"title": "Temporary object"},
+            files={"photos": ("object.jpg", image_bytes(), "image/jpeg")},
+        )
+        item_directory = tmp_path / "photos" / "1"
+        assert item_directory.is_dir()
+
+        response = client.post("/items/1/delete", follow_redirects=False)
+        detail_response = client.get("/items/1")
+
+    assert response.status_code == 303
+    assert response.headers["location"].endswith("/")
+    assert detail_response.status_code == 404
+    with connect(database) as connection:
+        assert connection.execute("SELECT count(*) FROM items").fetchone()[0] == 0
+        assert connection.execute("SELECT count(*) FROM photos").fetchone()[0] == 0
+    assert not item_directory.exists()
