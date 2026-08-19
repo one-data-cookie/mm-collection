@@ -1,3 +1,4 @@
+import re
 from io import BytesIO
 
 from fastapi.testclient import TestClient
@@ -44,12 +45,17 @@ def test_home_assistant_ingress_uses_same_origin_paths(tmp_path):
             headers=headers,
             follow_redirects=False,
         )
+        detail = client.get("/items/1", headers=headers)
+        script = client.get("/static/app.js", headers=headers)
 
     assert page.status_code == 200
     assert f'href="{ingress_path}/items/new"' in page.text
     assert f'href="{ingress_path}/static/app.css"' in page.text
     assert "http://example.ui.nabu.casa" not in page.text
     assert stylesheet.status_code == 200
+    assert detail.status_code == 200
+    assert f'src="{ingress_path}/static/app.js"' in detail.text
+    assert script.status_code == 200
     assert redirect.status_code == 303
     assert redirect.headers["location"] == f"{ingress_path}/"
 
@@ -173,7 +179,7 @@ def test_blank_title_is_rejected(tmp_path):
         assert connection.execute("SELECT count(*) FROM items").fetchone()[0] == 0
 
 
-def test_dates_are_saved_as_iso_dates(tmp_path):
+def test_date_created_is_free_text_and_date_acquired_is_iso(tmp_path):
     database = tmp_path / "collection.sqlite"
     app = create_app(database)
 
@@ -182,7 +188,7 @@ def test_dates_are_saved_as_iso_dates(tmp_path):
             "/items/new",
             data={
                 "title": "Dated object",
-                "date_created": "2026-08-09",
+                "date_created": "c. 1950–1960",
                 "date_acquired": "2026-08-19",
             },
             follow_redirects=False,
@@ -191,20 +197,29 @@ def test_dates_are_saved_as_iso_dates(tmp_path):
     assert response.status_code == 303
     with connect(database) as connection:
         item = connection.execute("SELECT * FROM items").fetchone()
-    assert item["date_created"] == "2026-08-09"
+    assert item["date_created"] == "c. 1950–1960"
     assert item["date_acquired"] == "2026-08-19"
 
 
-def test_date_fields_show_the_required_iso_format(tmp_path):
+def test_date_acquired_has_picker_and_date_created_is_free_text(tmp_path):
     app = create_app(tmp_path / "collection.sqlite")
 
     with TestClient(app) as client:
         response = client.get("/items/new")
 
     assert response.status_code == 200
-    assert response.text.count('placeholder="YYYY-MM-DD"') == 2
-    assert response.text.count('pattern="\\d{4}-\\d{2}-\\d{2}"') == 2
-    assert 'type="date"' not in response.text
+    created_input = re.search(
+        r'<input[^>]*name="date_created"[^>]*>', response.text, re.DOTALL
+    )
+    acquired_input = re.search(
+        r'<input[^>]*name="date_acquired"[^>]*>', response.text, re.DOTALL
+    )
+    assert created_input is not None
+    assert acquired_input is not None
+    assert 'type="date"' not in created_input.group()
+    assert 'placeholder="e.g. c. 1950 or 1980s"' in created_input.group()
+    assert 'type="date"' in acquired_input.group()
+    assert "Date acquired <strong>YYYY-MM-DD</strong>" in response.text
 
 
 def test_invalid_date_is_rejected(tmp_path):
@@ -214,11 +229,11 @@ def test_invalid_date_is_rejected(tmp_path):
     with TestClient(app) as client:
         response = client.post(
             "/items/new",
-            data={"title": "Bad date", "date_created": "19/08/2026"},
+            data={"title": "Bad date", "date_acquired": "19/08/2026"},
         )
 
     assert response.status_code == 422
-    assert "Please enter dates as YYYY-MM-DD" in response.text
+    assert "Please enter Date acquired as YYYY-MM-DD" in response.text
     with connect(database) as connection:
         assert connection.execute("SELECT count(*) FROM items").fetchone()[0] == 0
 
@@ -315,11 +330,11 @@ def test_invalid_edit_leaves_the_existing_item_unchanged(tmp_path):
         client.post("/items/new", data={"title": "Original"})
         response = client.post(
             "/items/1/edit",
-            data={"title": "Changed", "date_created": "not-a-date"},
+            data={"title": "Changed", "date_acquired": "not-a-date"},
         )
 
     assert response.status_code == 422
-    assert "Please enter dates as YYYY-MM-DD" in response.text
+    assert "Please enter Date acquired as YYYY-MM-DD" in response.text
     with connect(database) as connection:
         item = connection.execute("SELECT * FROM items WHERE id = 1").fetchone()
     assert item["title"] == "Original"

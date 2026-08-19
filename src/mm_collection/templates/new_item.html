@@ -44,23 +44,19 @@
             <input name="type" value="{{ values.get('type') or '' }}">
           </label>
           <label>
-            <span>Date created <strong>YYYY-MM-DD</strong></span>
+            <span>Date created</span>
             <input
               name="date_created"
               value="{{ values.get('date_created') or '' }}"
-              placeholder="YYYY-MM-DD"
-              inputmode="numeric"
-              pattern="\d{4}-\d{2}-\d{2}"
+              placeholder="e.g. c. 1950 or 1980s"
             >
           </label>
           <label>
             <span>Date acquired <strong>YYYY-MM-DD</strong></span>
             <input
+              type="date"
               name="date_acquired"
               value="{{ values.get('date_acquired') or '' }}"
-              placeholder="YYYY-MM-DD"
-              inputmode="numeric"
-              pattern="\d{4}-\d{2}-\d{2}"
             >
           </label>
           <label>

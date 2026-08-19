@@ -32,20 +32,20 @@ from .database import (
 
 PACKAGE_DIRECTORY = Path(__file__).parent
 templates = Jinja2Templates(directory=PACKAGE_DIRECTORY / "templates")
-DATE_FIELDS = ("date_created", "date_acquired")
+ISO_DATE_FIELDS = ("date_acquired",)
 INGRESS_PROXY_ADDRESSES = {"172.30.32.2", "127.0.0.1", "::1"}
 
 
 def _normalize_dates(values: dict[str, str | None]) -> str | None:
     """Normalize entered dates to ISO format, returning an error if invalid."""
-    for field in DATE_FIELDS:
+    for field in ISO_DATE_FIELDS:
         value = values[field]
         if value is None:
             continue
         try:
             values[field] = date.fromisoformat(value).isoformat()
         except ValueError:
-            return "Please enter dates as YYYY-MM-DD."
+            return "Please enter Date acquired as YYYY-MM-DD."
     return None
 
 

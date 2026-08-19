@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ item.title }} · M&amp;M Collection</title>
     <link rel="stylesheet" href="{{ path_for(request, 'static', path='/app.css') }}">
+    <script src="{{ path_for(request, 'static', path='/app.js') }}" defer></script>
   </head>
   <body>
     <header class="site-header">
@@ -73,7 +74,10 @@
             {% if item.price %}
               <div><dt>Price</dt><dd>{{ item.price }}</dd></div>
             {% endif %}
-            <div><dt>Added to collection</dt><dd>{{ item.date_added[:10] }}</dd></div>
+            <div>
+              <dt>Added to collection</dt>
+              <dd><time datetime="{{ item.date_added }}" data-local-date>{{ item.date_added[:10] }}</time></dd>
+            </div>
           </dl>
 
           <form
