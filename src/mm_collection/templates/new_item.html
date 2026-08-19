@@ -44,12 +44,24 @@
             <input name="type" value="{{ values.get('type') or '' }}">
           </label>
           <label>
-            <span>Date created</span>
-            <input type="date" name="date_created" value="{{ values.get('date_created') or '' }}">
+            <span>Date created <strong>YYYY-MM-DD</strong></span>
+            <input
+              name="date_created"
+              value="{{ values.get('date_created') or '' }}"
+              placeholder="YYYY-MM-DD"
+              inputmode="numeric"
+              pattern="\d{4}-\d{2}-\d{2}"
+            >
           </label>
           <label>
-            <span>Date acquired</span>
-            <input type="date" name="date_acquired" value="{{ values.get('date_acquired') or '' }}">
+            <span>Date acquired <strong>YYYY-MM-DD</strong></span>
+            <input
+              name="date_acquired"
+              value="{{ values.get('date_acquired') or '' }}"
+              placeholder="YYYY-MM-DD"
+              inputmode="numeric"
+              pattern="\d{4}-\d{2}-\d{2}"
+            >
           </label>
           <label>
             <span>Seller</span>

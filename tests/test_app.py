@@ -142,6 +142,18 @@ def test_dates_are_saved_as_iso_dates(tmp_path):
     assert item["date_acquired"] == "2026-08-19"
 
 
+def test_date_fields_show_the_required_iso_format(tmp_path):
+    app = create_app(tmp_path / "collection.sqlite")
+
+    with TestClient(app) as client:
+        response = client.get("/items/new")
+
+    assert response.status_code == 200
+    assert response.text.count('placeholder="YYYY-MM-DD"') == 2
+    assert response.text.count('pattern="\\d{4}-\\d{2}-\\d{2}"') == 2
+    assert 'type="date"' not in response.text
+
+
 def test_invalid_date_is_rejected(tmp_path):
     database = tmp_path / "collection.sqlite"
     app = create_app(database)
