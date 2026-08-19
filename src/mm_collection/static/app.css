@@ -118,9 +118,23 @@ h1 {
   padding-top: 1rem;
 }
 
+.object-card__link {
+  display: block;
+}
+
 .object-card h2 {
   margin-bottom: 0.35rem;
   font-size: 1.45rem;
+}
+
+.object-card h2 a {
+  text-decoration: none;
+}
+
+.object-card h2 a:hover,
+.object-card h2 a:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
 }
 
 .object-card p,
@@ -193,8 +207,104 @@ small {
   padding-inline: 1.5rem;
 }
 
+.breadcrumbs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2.5rem;
+  color: #6e655b;
+  font-size: 0.9rem;
+}
+
+.breadcrumbs a {
+  text-underline-offset: 0.2em;
+}
+
+.object-detail__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.65fr);
+  gap: clamp(2.5rem, 6vw, 6rem);
+  align-items: start;
+}
+
+.object-hero {
+  display: block;
+  width: 100%;
+  min-height: 24rem;
+  max-height: 75vh;
+  object-fit: contain;
+  background: #e6dfd3;
+}
+
+.object-hero.object-card__placeholder {
+  display: grid;
+}
+
+.photo-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.photo-gallery img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  background: #e6dfd3;
+}
+
+.object-record {
+  position: sticky;
+  top: 2rem;
+}
+
+.object-record h1 {
+  font-size: clamp(2.6rem, 5vw, 4.5rem);
+}
+
+.object-story {
+  margin: 2rem 0;
+  font-family: Georgia, serif;
+  font-size: 1.15rem;
+  line-height: 1.65;
+  white-space: pre-line;
+}
+
+.object-metadata {
+  margin: 2.5rem 0 0;
+  border-top: 1px solid #bdb5a9;
+}
+
+.object-metadata div {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.8fr) 1.2fr;
+  gap: 1rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid #d6d0c4;
+}
+
+.object-metadata dt {
+  color: #6e655b;
+}
+
+.object-metadata dd {
+  margin: 0;
+}
+
 @media (max-width: 38rem) {
   .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .object-detail__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .object-hero {
+    min-height: 18rem;
+  }
+
+  .object-record {
+    position: static;
   }
 }

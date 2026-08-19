@@ -127,3 +127,66 @@ def list_items(path: Path | None = None) -> list[dict[str, object]]:
             """
         ).fetchall()
     return [dict(row) for row in rows]
+
+
+def get_item(item_id: int, path: Path | None = None) -> dict[str, object] | None:
+    """Return one item with its ordered photographs, or None when absent."""
+    with connect(path) as connection:
+        item_row = connection.execute(
+            "SELECT * FROM items WHERE id = ?", (item_id,)
+        ).fetchone()
+        if item_row is None:
+            return None
+        photo_rows = connection.execute(
+            """
+            SELECT * FROM photos
+            WHERE item_id = ?
+            ORDER BY is_primary DESC, position, id
+            """,
+            (item_id,),
+        ).fetchall()
+
+    item = dict(item_row)
+    photos = [dict(row) for row in photo_rows]
+    primary = next((photo for photo in photos if photo["is_primary"]), None)
+    item["photos"] = photos
+    item["primary_photo"] = primary
+    item["additional_photos"] = [
+        photo for photo in photos if primary is None or photo["id"] != primary["id"]
+    ]
+    return item
+
+
+def update_item(
+    item_id: int,
+    values: dict[str, str | None],
+    path: Path | None = None,
+) -> bool:
+    """Update editable metadata without changing the creation timestamp."""
+    with connect(path) as connection:
+        result = connection.execute(
+            """
+            UPDATE items SET
+                title = ?,
+                author = ?,
+                date_created = ?,
+                type = ?,
+                date_acquired = ?,
+                seller = ?,
+                price = ?,
+                story = ?
+            WHERE id = ?
+            """,
+            (
+                values.get("title"),
+                values.get("author"),
+                values.get("date_created"),
+                values.get("type"),
+                values.get("date_acquired"),
+                values.get("seller"),
+                values.get("price"),
+                values.get("story"),
+                item_id,
+            ),
+        )
+    return result.rowcount == 1

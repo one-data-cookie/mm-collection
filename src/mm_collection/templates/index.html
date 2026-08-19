@@ -21,20 +21,22 @@
         <div class="collection-grid">
           {% for item in items %}
             <article class="object-card">
-              {% if item.primary_photo %}
-                <img
-                  class="object-card__image"
-                  src="{{ url_for('media', path='/' ~ item.primary_photo) }}"
-                  alt="{{ item.title }}"
-                  loading="lazy"
-                >
-              {% else %}
-                <div class="object-card__image object-card__placeholder">
-                  <span>No photograph</span>
-                </div>
-              {% endif %}
+              <a class="object-card__link" href="{{ url_for('item_detail', item_id=item.id) }}">
+                {% if item.primary_photo %}
+                  <img
+                    class="object-card__image"
+                    src="{{ url_for('media', path='/' ~ item.primary_photo) }}"
+                    alt="{{ item.title }}"
+                    loading="lazy"
+                  >
+                {% else %}
+                  <div class="object-card__image object-card__placeholder">
+                    <span>No photograph</span>
+                  </div>
+                {% endif %}
+              </a>
               <div class="object-card__text">
-                <h2>{{ item.title }}</h2>
+                <h2><a href="{{ url_for('item_detail', item_id=item.id) }}">{{ item.title }}</a></h2>
                 {% if item.author %}<p>{{ item.author }}</p>{% endif %}
                 {% if item.type or item.date_created %}
                   <p class="metadata">

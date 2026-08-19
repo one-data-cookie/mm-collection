@@ -3,19 +3,19 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Add an object · M&amp;M Collection</title>
+    <title>{% if editing %}Edit {{ values.title }}{% else %}Add an object{% endif %} · M&amp;M Collection</title>
     <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}">
   </head>
   <body>
     <header class="site-header">
       <a class="wordmark" href="{{ url_for('index') }}">M&amp;M Collection</a>
-      <a class="quiet-link" href="{{ url_for('index') }}">Cancel</a>
+      <a class="quiet-link" href="{{ cancel_url }}">Cancel</a>
     </header>
     <main class="page page--narrow">
       <div class="page-heading">
-        <p class="eyebrow">New acquisition</p>
-        <h1>Add an object</h1>
-        <p>Start with the essentials. Everything except the title is optional.</p>
+        <p class="eyebrow">{% if editing %}Collection object{% else %}New acquisition{% endif %}</p>
+        <h1>{% if editing %}Edit object{% else %}Add an object{% endif %}</h1>
+        <p>{% if editing %}Update the catalogue information for this object.{% else %}Start with the essentials. Everything except the title is optional.{% endif %}</p>
       </div>
 
       {% if error %}<p class="form-error" role="alert">{{ error }}</p>{% endif %}
@@ -23,48 +23,50 @@
       <form method="post" enctype="multipart/form-data" class="object-form">
         <label>
           <span>Title <strong>Required</strong></span>
-          <input name="title" value="{{ values.get('title', '') }}" required autofocus>
+          <input name="title" value="{{ values.get('title') or '' }}" required autofocus>
         </label>
 
-        <label>
-          <span>Photographs</span>
-          <input type="file" name="photos" accept="image/*" multiple>
-          <small>Select or take several photographs at once.</small>
-        </label>
+        {% if not editing %}
+          <label>
+            <span>Photographs</span>
+            <input type="file" name="photos" accept="image/*" multiple>
+            <small>Select or take several photographs at once.</small>
+          </label>
+        {% endif %}
 
         <div class="form-grid">
           <label>
             <span>Author or maker</span>
-            <input name="author" value="{{ values.get('author', '') }}">
+            <input name="author" value="{{ values.get('author') or '' }}">
           </label>
           <label>
             <span>Object type</span>
-            <input name="type" value="{{ values.get('type', '') }}">
+            <input name="type" value="{{ values.get('type') or '' }}">
           </label>
           <label>
             <span>Date created</span>
-            <input name="date_created" value="{{ values.get('date_created', '') }}">
+            <input type="date" name="date_created" value="{{ values.get('date_created') or '' }}">
           </label>
           <label>
             <span>Date acquired</span>
-            <input type="date" name="date_acquired" value="{{ values.get('date_acquired', '') }}">
+            <input type="date" name="date_acquired" value="{{ values.get('date_acquired') or '' }}">
           </label>
           <label>
             <span>Seller</span>
-            <input name="seller" value="{{ values.get('seller', '') }}">
+            <input name="seller" value="{{ values.get('seller') or '' }}">
           </label>
           <label>
             <span>Price</span>
-            <input name="price" value="{{ values.get('price', '') }}" inputmode="decimal">
+            <input name="price" value="{{ values.get('price') or '' }}" inputmode="decimal">
           </label>
         </div>
 
         <label>
           <span>Story</span>
-          <textarea name="story" rows="6">{{ values.get('story', '') }}</textarea>
+          <textarea name="story" rows="6">{{ values.get('story') or '' }}</textarea>
         </label>
 
-        <button class="button button--submit" type="submit">Save object</button>
+        <button class="button button--submit" type="submit">{% if editing %}Save changes{% else %}Save object{% endif %}</button>
       </form>
     </main>
   </body>
