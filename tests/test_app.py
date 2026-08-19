@@ -27,6 +27,37 @@ def test_health_check(tmp_path):
     assert response.json() == {"status": "ok"}
 
 
+def test_home_assistant_ingress_prefix_is_used_for_links(tmp_path):
+    app = create_app(tmp_path / "collection.sqlite")
+    ingress_path = "/api/hassio_ingress/example-session"
+
+    with TestClient(app) as client:
+        response = client.get(
+            "/",
+            headers={"X-Ingress-Path": ingress_path},
+        )
+
+    assert response.status_code == 200
+    assert f'href="http://testserver{ingress_path}/items/new"' in response.text
+    assert f'href="http://testserver{ingress_path}/static/app.css"' in response.text
+
+
+def test_home_assistant_mode_rejects_direct_connections(tmp_path, monkeypatch):
+    monkeypatch.setenv("MM_COLLECTION_INGRESS_ONLY", "true")
+    app = create_app(tmp_path / "collection.sqlite")
+
+    with TestClient(app, client=("192.0.2.1", 50000)) as direct_client:
+        direct_response = direct_client.get("/")
+    with TestClient(app, client=("172.30.32.2", 50000)) as ingress_client:
+        ingress_response = ingress_client.get("/")
+    with TestClient(app, client=("127.0.0.1", 50000)) as health_client:
+        health_response = health_client.get("/health")
+
+    assert direct_response.status_code == 403
+    assert ingress_response.status_code == 200
+    assert health_response.status_code == 200
+
+
 def image_bytes(size=(80, 60), color="red"):
     output = BytesIO()
     Image.new("RGB", size, color).save(output, "JPEG", quality=95)

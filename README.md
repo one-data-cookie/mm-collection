@@ -69,3 +69,20 @@ docker compose down
 
 Back up the complete `data/` directory to preserve the database and all original
 photographs.
+
+## Home Assistant OS
+
+The repository is also a Home Assistant app repository. Published images support
+Raspberry Pi 4 (`aarch64`) and local `amd64` Home Assistant installations.
+
+To install it in Home Assistant:
+
+1. Open **Settings → Apps → App store**.
+2. Open the store menu, choose **Repositories**, and add
+   `https://github.com/one-data-cookie/mm-collection`.
+3. Install **M&M Collection**, start it, and enable **Show in sidebar**.
+
+The catalogue is available only through Home Assistant Ingress. Home Assistant
+handles authentication, and all catalogue data remains in the app's persistent
+`/data` directory. Select the app in Home Assistant backups to include the
+database and photographs.

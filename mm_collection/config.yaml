@@ -1,0 +1,20 @@
+name: M&M Collection
+version: "0.1.0"
+slug: mm_collection
+description: A private, museum-style catalogue for a household collection
+url: https://github.com/one-data-cookie/mm-collection/tree/main/mm_collection
+arch:
+  - aarch64
+  - amd64
+image: ghcr.io/one-data-cookie/mm-collection
+ingress: true
+ingress_port: 8000
+panel_icon: mdi:archive-outline
+panel_title: M&M Collection
+panel_admin: false
+watchdog: http://[HOST]:[PORT:8000]/health
+backup: cold
+environment:
+  MM_COLLECTION_DATA_DIR: /data
+  MM_COLLECTION_INGRESS_ONLY: "true"
+schema: false

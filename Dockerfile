@@ -12,12 +12,12 @@ RUN groupadd --gid 1000 app \
 
 COPY pyproject.toml README.md ./
 COPY src ./src
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN python -m pip install . \
     && mkdir -p /data \
-    && chown -R app:app /data
-
-USER app
+    && chown -R app:app /data \
+    && chmod 755 /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 8000
 VOLUME ["/data"]
@@ -25,4 +25,5 @@ VOLUME ["/data"]
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).read()"]
 
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["uvicorn", "mm_collection.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]

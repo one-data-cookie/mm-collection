@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import date
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.datastructures import UploadFile
@@ -32,6 +33,7 @@ from .database import (
 PACKAGE_DIRECTORY = Path(__file__).parent
 templates = Jinja2Templates(directory=PACKAGE_DIRECTORY / "templates")
 DATE_FIELDS = ("date_created", "date_acquired")
+INGRESS_PROXY_ADDRESSES = {"172.30.32.2", "127.0.0.1", "::1"}
 
 
 def _normalize_dates(values: dict[str, str | None]) -> str | None:
@@ -56,6 +58,11 @@ def _validation_error(values: dict[str, str | None]) -> str | None:
 def create_app(db_path: Path | None = None) -> FastAPI:
     target = db_path or database_path()
     photos = target.parent / "photos"
+    ingress_only = os.environ.get("MM_COLLECTION_INGRESS_ONLY", "").lower() in {
+        "1",
+        "true",
+        "yes",
+    }
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -66,6 +73,20 @@ def create_app(db_path: Path | None = None) -> FastAPI:
         yield
 
     application = FastAPI(title="M&M Collection", lifespan=lifespan)
+
+    @application.middleware("http")
+    async def home_assistant_ingress(request: Request, call_next):
+        """Trust Home Assistant's Ingress proxy and generate prefixed URLs."""
+        client_host = request.client.host if request.client is not None else None
+        if ingress_only and client_host not in INGRESS_PROXY_ADDRESSES:
+            return PlainTextResponse("Forbidden", status_code=403)
+
+        ingress_path = request.headers.get("x-ingress-path", "").rstrip("/")
+        if ingress_path.startswith("/"):
+            request.scope["root_path"] = ingress_path
+
+        return await call_next(request)
+
     application.mount(
         "/static",
         StaticFiles(directory=PACKAGE_DIRECTORY / "static"),
