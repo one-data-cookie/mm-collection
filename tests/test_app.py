@@ -219,7 +219,7 @@ def test_date_acquired_has_picker_and_date_created_is_free_text(tmp_path):
     assert 'type="date"' not in created_input.group()
     assert 'placeholder="e.g. c. 1950 or 1980s"' in created_input.group()
     assert 'type="date"' in acquired_input.group()
-    assert "Date acquired <strong>YYYY-MM-DD</strong>" in response.text
+    assert "Date acquired <strong>YYYY-MM-DD</strong>" not in response.text
 
 
 def test_invalid_date_is_rejected(tmp_path):
@@ -263,6 +263,11 @@ def test_object_detail_shows_metadata_and_all_photos(tmp_path):
     assert "Glass figure" in detail_page.text
     assert "Unknown maker" in detail_page.text
     assert "Found together.\nKept together." in detail_page.text
+    assert detail_page.text.index("Edit object") < detail_page.text.index("Delete object")
+    assert detail_page.text.index("Manage photos") < detail_page.text.index("Delete object")
+    assert detail_page.text.index('<div class="record-actions">') > detail_page.text.index(
+        '<article class="object-record">'
+    )
     with connect(database) as connection:
         photo_paths = [
             row["display_path"]

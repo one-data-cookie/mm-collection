@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.3
+
+- Let the native date picker present dates in the device's locale without a
+  conflicting format note.
+- Move object editing and photo management actions beside the deletion action
+  in the item record.
+
 ## 0.1.2
 
 - Restore the Date acquired picker while keeping its stored value in
