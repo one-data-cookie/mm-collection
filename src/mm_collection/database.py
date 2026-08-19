@@ -112,3 +112,18 @@ def apply_migrations(path: Path | None = None) -> None:
                 (version, name),
             )
 
+
+def list_items(path: Path | None = None) -> list[dict[str, object]]:
+    """Return newest items first, including each item's primary display photo."""
+    with connect(path) as connection:
+        rows = connection.execute(
+            """
+            SELECT items.*, photos.display_path AS primary_photo
+            FROM items
+            LEFT JOIN photos
+                ON photos.item_id = items.id
+                AND photos.is_primary = 1
+            ORDER BY items.date_added DESC, items.id DESC
+            """
+        ).fetchall()
+    return [dict(row) for row in rows]
