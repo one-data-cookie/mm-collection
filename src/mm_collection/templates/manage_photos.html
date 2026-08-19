@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Manage photographs · {{ item.title }} · M&amp;M Collection</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}">
+    <link rel="stylesheet" href="{{ path_for(request, 'static', path='/app.css') }}">
   </head>
   <body>
     <header class="site-header">
-      <a class="wordmark" href="{{ url_for('index') }}">M&amp;M Collection</a>
-      <a class="button" href="{{ url_for('item_detail', item_id=item.id) }}">Done</a>
+      <a class="wordmark" href="{{ path_for(request, 'index') }}">M&amp;M Collection</a>
+      <a class="button" href="{{ path_for(request, 'item_detail', item_id=item.id) }}">Done</a>
     </header>
 
     <main class="page">
@@ -38,14 +38,14 @@
             <article class="photo-editor">
               <div class="photo-editor__preview">
                 <img
-                  src="{{ url_for('media', path='/' ~ photo.display_path) }}"
+                  src="{{ path_for(request, 'media', path='/' ~ photo.display_path) }}"
                   alt="{{ photo.caption or item.title }}"
                   loading="lazy"
                 >
                 {% if photo.is_primary %}<span class="primary-badge">Primary</span>{% endif %}
               </div>
 
-              <form method="post" action="{{ url_for('update_photo', item_id=item.id, photo_id=photo.id) }}">
+              <form method="post" action="{{ path_for(request, 'update_photo', item_id=item.id, photo_id=photo.id) }}">
                 <label>
                   <span>Caption</span>
                   <textarea name="caption" rows="2">{{ photo.caption or '' }}</textarea>

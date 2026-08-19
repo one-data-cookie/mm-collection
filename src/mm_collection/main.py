@@ -55,6 +55,18 @@ def _validation_error(values: dict[str, str | None]) -> str | None:
     return _normalize_dates(values)
 
 
+def _path_for(request: Request, name: str, **path_params: object) -> str:
+    """Build a same-origin path that remains inside Home Assistant Ingress."""
+    path = request.url_for(name, **path_params).path
+    ingress_path = request.headers.get("x-ingress-path", "").rstrip("/")
+    if ingress_path.startswith("/") and not ingress_path.startswith("//"):
+        return f"{ingress_path}{path}"
+    return path
+
+
+templates.env.globals["path_for"] = _path_for
+
+
 def create_app(db_path: Path | None = None) -> FastAPI:
     target = db_path or database_path()
     photos = target.parent / "photos"
@@ -80,10 +92,6 @@ def create_app(db_path: Path | None = None) -> FastAPI:
         client_host = request.client.host if request.client is not None else None
         if ingress_only and client_host not in INGRESS_PROXY_ADDRESSES:
             return PlainTextResponse("Forbidden", status_code=403)
-
-        ingress_path = request.headers.get("x-ingress-path", "").rstrip("/")
-        if ingress_path.startswith("/"):
-            request.scope["root_path"] = ingress_path
 
         return await call_next(request)
 
@@ -119,7 +127,7 @@ def create_app(db_path: Path | None = None) -> FastAPI:
                 "values": {},
                 "error": None,
                 "editing": False,
-                "cancel_url": request.url_for("index"),
+                "cancel_url": _path_for(request, "index"),
             },
         )
 
@@ -147,7 +155,7 @@ def create_app(db_path: Path | None = None) -> FastAPI:
                     "values": values,
                     "error": validation_error,
                     "editing": False,
-                    "cancel_url": request.url_for("index"),
+                    "cancel_url": _path_for(request, "index"),
                 },
                 status_code=422,
             )
@@ -162,12 +170,12 @@ def create_app(db_path: Path | None = None) -> FastAPI:
                     "values": values,
                     "error": str(error),
                     "editing": False,
-                    "cancel_url": request.url_for("index"),
+                    "cancel_url": _path_for(request, "index"),
                 },
                 status_code=400,
             )
 
-        return RedirectResponse(request.url_for("index"), status_code=303)
+        return RedirectResponse(_path_for(request, "index"), status_code=303)
 
     @application.get(
         "/items/{item_id}", response_class=HTMLResponse, name="item_detail"
@@ -196,7 +204,7 @@ def create_app(db_path: Path | None = None) -> FastAPI:
                 "values": item,
                 "error": None,
                 "editing": True,
-                "cancel_url": request.url_for("item_detail", item_id=item_id),
+                "cancel_url": _path_for(request, "item_detail", item_id=item_id),
             },
         )
 
@@ -223,14 +231,16 @@ def create_app(db_path: Path | None = None) -> FastAPI:
                     "values": values,
                     "error": validation_error,
                     "editing": True,
-                    "cancel_url": request.url_for("item_detail", item_id=item_id),
+                    "cancel_url": _path_for(
+                        request, "item_detail", item_id=item_id
+                    ),
                 },
                 status_code=422,
             )
 
         update_item(item_id, values, target)
         return RedirectResponse(
-            request.url_for("item_detail", item_id=item_id), status_code=303
+            _path_for(request, "item_detail", item_id=item_id), status_code=303
         )
 
     @application.get(
@@ -283,7 +293,7 @@ def create_app(db_path: Path | None = None) -> FastAPI:
             )
 
         return RedirectResponse(
-            request.url_for("manage_photos", item_id=item_id), status_code=303
+            _path_for(request, "manage_photos", item_id=item_id), status_code=303
         )
 
     @application.post(
@@ -301,14 +311,14 @@ def create_app(db_path: Path | None = None) -> FastAPI:
         if not manage_photo(target, photos, item_id, photo_id, caption, action):
             raise HTTPException(status_code=404, detail="Photograph not found")
         return RedirectResponse(
-            request.url_for("manage_photos", item_id=item_id), status_code=303
+            _path_for(request, "manage_photos", item_id=item_id), status_code=303
         )
 
     @application.post("/items/{item_id}/delete", name="delete_item")
     async def delete_item_route(request: Request, item_id: int) -> RedirectResponse:
         if not delete_catalog_item(target, photos, item_id):
             raise HTTPException(status_code=404, detail="Object not found")
-        return RedirectResponse(request.url_for("index"), status_code=303)
+        return RedirectResponse(_path_for(request, "index"), status_code=303)
 
     return application
 

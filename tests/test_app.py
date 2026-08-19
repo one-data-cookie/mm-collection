@@ -27,19 +27,31 @@ def test_health_check(tmp_path):
     assert response.json() == {"status": "ok"}
 
 
-def test_home_assistant_ingress_prefix_is_used_for_links(tmp_path):
+def test_home_assistant_ingress_uses_same_origin_paths(tmp_path):
     app = create_app(tmp_path / "collection.sqlite")
     ingress_path = "/api/hassio_ingress/example-session"
+    headers = {"X-Ingress-Path": ingress_path}
 
-    with TestClient(app) as client:
-        response = client.get(
+    with TestClient(app, base_url="http://example.ui.nabu.casa") as client:
+        page = client.get(
             "/",
-            headers={"X-Ingress-Path": ingress_path},
+            headers=headers,
+        )
+        stylesheet = client.get("/static/app.css", headers=headers)
+        redirect = client.post(
+            "/items/new",
+            data={"title": "Ingress object"},
+            headers=headers,
+            follow_redirects=False,
         )
 
-    assert response.status_code == 200
-    assert f'href="http://testserver{ingress_path}/items/new"' in response.text
-    assert f'href="http://testserver{ingress_path}/static/app.css"' in response.text
+    assert page.status_code == 200
+    assert f'href="{ingress_path}/items/new"' in page.text
+    assert f'href="{ingress_path}/static/app.css"' in page.text
+    assert "http://example.ui.nabu.casa" not in page.text
+    assert stylesheet.status_code == 200
+    assert redirect.status_code == 303
+    assert redirect.headers["location"] == f"{ingress_path}/"
 
 
 def test_home_assistant_mode_rejects_direct_connections(tmp_path, monkeypatch):
@@ -232,7 +244,7 @@ def test_object_detail_shows_metadata_and_all_photos(tmp_path):
         detail_page = client.get("/items/1")
 
     assert detail_page.status_code == 200
-    assert 'href="http://testserver/items/1"' in collection_page.text
+    assert 'href="/items/1"' in collection_page.text
     assert "Glass figure" in detail_page.text
     assert "Unknown maker" in detail_page.text
     assert "Found together.\nKept together." in detail_page.text
