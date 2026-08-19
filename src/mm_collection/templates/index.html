@@ -3,57 +3,100 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>M&amp;M Collection</title>
+    <title>M&amp;M Collection{% if query %} · Search{% endif %}</title>
     <link rel="stylesheet" href="{{ path_for(request, 'static', path='/app.css') }}">
   </head>
-  <body>
+  <body class="collection-page">
     <header class="site-header">
-      <a class="wordmark" href="{{ path_for(request, 'index') }}">M&amp;M Collection</a>
-      <a class="button" href="{{ path_for(request, 'new_item') }}">Add an object</a>
+      {% include "_wordmark.html" %}
+      <a class="button button--light" href="{{ path_for(request, 'new_item') }}">Add an object</a>
     </header>
-    <main class="page">
-      <div class="page-heading">
-        <p class="eyebrow">Private collection</p>
-        <h1>Our objects</h1>
-      </div>
 
-      {% if items %}
-        <div class="collection-grid">
-          {% for item in items %}
-            <article class="object-card">
-              <a class="object-card__link" href="{{ path_for(request, 'item_detail', item_id=item.id) }}">
-                {% if item.primary_photo %}
-                  <img
-                    class="object-card__image"
-                    src="{{ path_for(request, 'media', path='/' ~ item.primary_photo) }}"
-                    alt="{{ item.title }}"
-                    loading="lazy"
-                  >
-                {% else %}
-                  <div class="object-card__image object-card__placeholder">
-                    <span>No photograph</span>
-                  </div>
-                {% endif %}
-              </a>
-              <div class="object-card__text">
-                <h2><a href="{{ path_for(request, 'item_detail', item_id=item.id) }}">{{ item.title }}</a></h2>
-                {% if item.author %}<p>{{ item.author }}</p>{% endif %}
-                {% if item.type or item.date_created %}
-                  <p class="metadata">
-                    {{ item.type or '' }}{% if item.type and item.date_created %}, {% endif %}{{ item.date_created or '' }}
-                  </p>
-                {% endif %}
-              </div>
-            </article>
-          {% endfor %}
+    <main>
+      <section class="collection-intro">
+        <p class="eyebrow">M&amp;M private collection</p>
+        <h1>Explore the collection</h1>
+        <p>Objects, stories and memories gathered together.</p>
+      </section>
+
+      <section class="search-section" aria-labelledby="search-heading">
+        <div class="search-section__inner">
+          <h2 id="search-heading">Search the collection</h2>
+          <form class="collection-search" method="get" action="{{ path_for(request, 'index') }}" role="search">
+            <label class="visually-hidden" for="collection-query">Search by object, maker or story</label>
+            <input
+              id="collection-query"
+              name="q"
+              type="search"
+              value="{{ query }}"
+              placeholder="Search by object, maker or story…"
+              autocomplete="off"
+            >
+            <button type="submit" aria-label="Search">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="10.8" cy="10.8" r="6.8"></circle>
+                <path d="m16 16 5 5"></path>
+              </svg>
+            </button>
+          </form>
+          {% if query %}
+            <p class="search-summary">
+              {{ items|length }} object{% if items|length != 1 %}s{% endif %} found for “{{ query }}”
+              <a href="{{ path_for(request, 'index') }}">Clear search</a>
+            </p>
+          {% else %}
+            <p class="search-summary">Browse {{ items|length }} object{% if items|length != 1 %}s{% endif %} in the collection</p>
+          {% endif %}
         </div>
-      {% else %}
-        <section class="empty-state">
-          <h2>The collection is ready.</h2>
-          <p>Add the first object now; only a title is required.</p>
-          <a class="text-link" href="{{ path_for(request, 'new_item') }}">Add the first object →</a>
-        </section>
-      {% endif %}
+      </section>
+
+      <section class="collection-results" aria-label="Collection objects">
+        {% if items %}
+          <div class="collection-grid">
+            {% for item in items %}
+              <article class="object-card">
+                <a class="object-card__link" href="{{ path_for(request, 'item_detail', item_id=item.id) }}">
+                  {% if item.primary_photo %}
+                    <img
+                      class="object-card__image"
+                      src="{{ path_for(request, 'media', path='/' ~ item.primary_photo) }}"
+                      alt="{{ item.title }}"
+                      loading="lazy"
+                    >
+                  {% else %}
+                    <div class="object-card__image object-card__placeholder">
+                      <span>No photograph</span>
+                    </div>
+                  {% endif %}
+                </a>
+                <div class="object-card__text">
+                  <h2><a href="{{ path_for(request, 'item_detail', item_id=item.id) }}">{{ item.title }}</a></h2>
+                  {% if item.author %}<p class="object-card__maker">{{ item.author }}</p>{% endif %}
+                  {% if item.type or item.date_created %}
+                    <p class="metadata">
+                      {{ item.type or '' }}{% if item.type and item.date_created %}, {% endif %}{{ item.date_created or '' }}
+                    </p>
+                  {% endif %}
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        {% elif query %}
+          <section class="empty-state">
+            <p class="eyebrow">No results</p>
+            <h2>Nothing matched “{{ query }}”.</h2>
+            <p>Try a title, maker, object type or a word from its story.</p>
+            <a class="text-link" href="{{ path_for(request, 'index') }}">View the full collection →</a>
+          </section>
+        {% else %}
+          <section class="empty-state">
+            <p class="eyebrow">An empty gallery</p>
+            <h2>The collection is ready.</h2>
+            <p>Add the first object now; only a title is required.</p>
+            <a class="text-link" href="{{ path_for(request, 'new_item') }}">Add the first object →</a>
+          </section>
+        {% endif %}
+      </section>
     </main>
   </body>
 </html>

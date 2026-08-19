@@ -60,6 +60,32 @@ def test_home_assistant_ingress_uses_same_origin_paths(tmp_path):
     assert redirect.headers["location"] == f"{ingress_path}/"
 
 
+def test_collection_search_matches_metadata_and_preserves_the_query(tmp_path):
+    app = create_app(tmp_path / "collection.sqlite")
+
+    with TestClient(app) as client:
+        client.post(
+            "/items/new",
+            data={
+                "title": "Blue vase",
+                "author": "Anna Nováková",
+                "type": "Ceramic",
+                "story": "Found in Brno",
+            },
+        )
+        client.post(
+            "/items/new",
+            data={"title": "Wooden chair", "author": "Unknown"},
+        )
+        response = client.get("/", params={"q": "ceramic"})
+
+    assert response.status_code == 200
+    assert "Blue vase" in response.text
+    assert "Wooden chair" not in response.text
+    assert 'value="ceramic"' in response.text
+    assert "1 object found" in response.text
+
+
 def test_home_assistant_mode_rejects_direct_connections(tmp_path, monkeypatch):
     monkeypatch.setenv("MM_COLLECTION_INGRESS_ONLY", "true")
     app = create_app(tmp_path / "collection.sqlite")

@@ -112,10 +112,11 @@ def create_app(db_path: Path | None = None) -> FastAPI:
 
     @application.get("/", response_class=HTMLResponse, name="index")
     async def index(request: Request) -> HTMLResponse:
+        query = request.query_params.get("q", "").strip()
         return templates.TemplateResponse(
             request=request,
             name="index.html",
-            context={"items": list_items(target)},
+            context={"items": list_items(target, query=query), "query": query},
         )
 
     @application.get("/items/new", response_class=HTMLResponse, name="new_item")

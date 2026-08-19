@@ -7,26 +7,23 @@
     <link rel="stylesheet" href="{{ path_for(request, 'static', path='/app.css') }}">
     <script src="{{ path_for(request, 'static', path='/app.js') }}" defer></script>
   </head>
-  <body>
+  <body class="detail-page">
     <header class="site-header">
-      <a class="wordmark" href="{{ path_for(request, 'index') }}">M&amp;M Collection</a>
+      {% include "_wordmark.html" %}
+      <a class="quiet-link" href="{{ path_for(request, 'index') }}">Back to collection</a>
     </header>
 
     <main class="page object-detail">
-      <nav class="breadcrumbs" aria-label="Breadcrumb">
-        <a href="{{ path_for(request, 'index') }}">Our objects</a>
-        <span aria-hidden="true">/</span>
-        <span>{{ item.title }}</span>
-      </nav>
-
       <div class="object-detail__layout">
         <section class="object-visuals" aria-label="Photographs">
           {% if item.primary_photo %}
-            <img
-              class="object-hero"
-              src="{{ path_for(request, 'media', path='/' ~ item.primary_photo.display_path) }}"
-              alt="{{ item.primary_photo.caption or item.title }}"
-            >
+            <div class="object-hero-frame">
+              <img
+                class="object-hero"
+                src="{{ path_for(request, 'media', path='/' ~ item.primary_photo.display_path) }}"
+                alt="{{ item.primary_photo.caption or item.title }}"
+              >
+            </div>
             {% if item.additional_photos %}
               <div class="photo-gallery">
                 {% for photo in item.additional_photos %}
@@ -39,7 +36,7 @@
               </div>
             {% endif %}
           {% else %}
-            <div class="object-hero object-card__placeholder">
+            <div class="object-hero-frame object-hero object-card__placeholder">
               <span>No photograph</span>
             </div>
           {% endif %}
@@ -48,6 +45,16 @@
         <article class="object-record">
           <p class="eyebrow">Collection object {{ item.id }}</p>
           <h1>{{ item.title }}</h1>
+
+          {% if item.author or item.type or item.date_created %}
+            <p class="object-byline">
+              {% if item.author %}{{ item.author }}{% endif %}
+              {% if item.author and (item.type or item.date_created) %}<span aria-hidden="true"> · </span>{% endif %}
+              {% if item.type %}{{ item.type }}{% endif %}
+              {% if item.type and item.date_created %}, {% endif %}
+              {% if item.date_created %}{{ item.date_created }}{% endif %}
+            </p>
+          {% endif %}
 
           {% if item.story %}<p class="object-story">{{ item.story }}</p>{% endif %}
 

@@ -6,9 +6,9 @@
     <title>Manage photographs · {{ item.title }} · M&amp;M Collection</title>
     <link rel="stylesheet" href="{{ path_for(request, 'static', path='/app.css') }}">
   </head>
-  <body>
+  <body class="admin-page">
     <header class="site-header">
-      <a class="wordmark" href="{{ path_for(request, 'index') }}">M&amp;M Collection</a>
+      {% include "_wordmark.html" %}
       <a class="button" href="{{ path_for(request, 'item_detail', item_id=item.id) }}">Done</a>
     </header>
 

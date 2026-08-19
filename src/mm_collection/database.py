@@ -113,18 +113,45 @@ def apply_migrations(path: Path | None = None) -> None:
             )
 
 
-def list_items(path: Path | None = None) -> list[dict[str, object]]:
-    """Return newest items first, including each item's primary display photo."""
+def list_items(
+    path: Path | None = None, query: str | None = None
+) -> list[dict[str, object]]:
+    """Return matching items newest first, with each primary display photo."""
+    search = (query or "").strip()
+    where = ""
+    parameters: tuple[str, ...] = ()
+    if search:
+        escaped = (
+            search.replace("\\", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_")
+        )
+        pattern = f"%{escaped}%"
+        where = """
+            WHERE (
+                items.title LIKE ? ESCAPE '\\'
+                OR COALESCE(items.author, '') LIKE ? ESCAPE '\\'
+                OR COALESCE(items.type, '') LIKE ? ESCAPE '\\'
+                OR COALESCE(items.date_created, '') LIKE ? ESCAPE '\\'
+                OR COALESCE(items.date_acquired, '') LIKE ? ESCAPE '\\'
+                OR COALESCE(items.seller, '') LIKE ? ESCAPE '\\'
+                OR COALESCE(items.story, '') LIKE ? ESCAPE '\\'
+            )
+        """
+        parameters = (pattern,) * 7
+
     with connect(path) as connection:
         rows = connection.execute(
-            """
+            f"""
             SELECT items.*, photos.display_path AS primary_photo
             FROM items
             LEFT JOIN photos
                 ON photos.item_id = items.id
                 AND photos.is_primary = 1
+            {where}
             ORDER BY items.date_added DESC, items.id DESC
-            """
+            """,
+            parameters,
         ).fetchall()
     return [dict(row) for row in rows]
 
