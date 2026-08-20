@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>M&amp;M Collection{% if query %} · Search{% endif %}</title>
-    <link rel="stylesheet" href="{{ path_for(request, 'static', path='/app.css') }}">
+    <style>{{ inline_css | safe }}</style>
   </head>
   <body class="collection-page">
     <header class="site-header">

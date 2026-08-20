@@ -38,9 +38,6 @@ def test_home_assistant_ingress_uses_same_origin_paths(tmp_path):
             "/",
             headers=headers,
         )
-        stylesheet = client.get(
-            f"/static/{ASSET_VERSION}/app.css", headers=headers
-        )
         redirect = client.post(
             "/items/new",
             data={"title": "Ingress object"},
@@ -52,11 +49,10 @@ def test_home_assistant_ingress_uses_same_origin_paths(tmp_path):
 
     assert page.status_code == 200
     assert f'href="{ingress_path}/items/new"' in page.text
-    assert (
-        f'href="{ingress_path}/static/{ASSET_VERSION}/app.css"' in page.text
-    )
+    assert "<style>" in page.text
+    assert "background: #1b1d1f" in page.text
+    assert "app.css" not in page.text
     assert "http://example.ui.nabu.casa" not in page.text
-    assert stylesheet.status_code == 200
     assert detail.status_code == 200
     assert f'src="{ingress_path}/static/{ASSET_VERSION}/app.js"' in detail.text
     assert script.status_code == 200

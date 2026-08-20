@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ item.title }} · M&amp;M Collection</title>
-    <link rel="stylesheet" href="{{ path_for(request, 'static', path='/app.css') }}">
+    <style>{{ inline_css | safe }}</style>
     <script src="{{ path_for(request, 'static', path='/app.js') }}" defer></script>
   </head>
   <body class="detail-page">

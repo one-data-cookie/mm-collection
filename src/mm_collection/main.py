@@ -77,6 +77,7 @@ def _asset_version() -> str:
 
 
 ASSET_VERSION = _asset_version()
+templates.env.globals["inline_css"] = (STATIC_DIRECTORY / "app.css").read_text()
 
 
 def create_app(db_path: Path | None = None) -> FastAPI:
