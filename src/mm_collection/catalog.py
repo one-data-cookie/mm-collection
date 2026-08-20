@@ -20,8 +20,10 @@ ITEM_FIELDS = (
     "author",
     "date_created",
     "type",
+    "origin",
     "date_acquired",
     "seller",
+    "location",
     "price",
     "story",
 )
@@ -163,8 +165,9 @@ async def create_item(
                 """
                 INSERT INTO items(
                     title, author, date_created, type,
-                    date_acquired, seller, price, story
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    origin, date_acquired, seller, location,
+                    price, story
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 tuple(values.get(field) for field in ITEM_FIELDS),
             ).lastrowid

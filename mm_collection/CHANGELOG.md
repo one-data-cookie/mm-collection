@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.4
+
+- Add optional Location and Origin metadata while preserving existing objects.
+- Show Location on collection cards and object detail pages.
+- Include Location and Origin in collection search.
+- Present the existing Seller field as Acquired from.
+- Add the museum-inspired M&M frontend, responsive object gallery, and search.
+
 ## 0.1.3
 
 - Let the native date picker present dates in the device's locale without a

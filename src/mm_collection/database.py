@@ -77,8 +77,14 @@ def _initial_schema(connection: sqlite3.Connection) -> None:
         connection.execute(statement)
 
 
+def _add_location_and_origin(connection: sqlite3.Connection) -> None:
+    connection.execute("ALTER TABLE items ADD COLUMN location TEXT")
+    connection.execute("ALTER TABLE items ADD COLUMN origin TEXT")
+
+
 MIGRATIONS: tuple[Migration, ...] = (
     (1, "initial_schema", _initial_schema),
+    (2, "add_location_and_origin", _add_location_and_origin),
 )
 
 
@@ -135,10 +141,12 @@ def list_items(
                 OR COALESCE(items.date_created, '') LIKE ? ESCAPE '\\'
                 OR COALESCE(items.date_acquired, '') LIKE ? ESCAPE '\\'
                 OR COALESCE(items.seller, '') LIKE ? ESCAPE '\\'
+                OR COALESCE(items.location, '') LIKE ? ESCAPE '\\'
+                OR COALESCE(items.origin, '') LIKE ? ESCAPE '\\'
                 OR COALESCE(items.story, '') LIKE ? ESCAPE '\\'
             )
         """
-        parameters = (pattern,) * 7
+        parameters = (pattern,) * 9
 
     with connect(path) as connection:
         rows = connection.execute(
@@ -198,8 +206,10 @@ def update_item(
                 author = ?,
                 date_created = ?,
                 type = ?,
+                origin = ?,
                 date_acquired = ?,
                 seller = ?,
+                location = ?,
                 price = ?,
                 story = ?
             WHERE id = ?
@@ -209,8 +219,10 @@ def update_item(
                 values.get("author"),
                 values.get("date_created"),
                 values.get("type"),
+                values.get("origin"),
                 values.get("date_acquired"),
                 values.get("seller"),
+                values.get("location"),
                 values.get("price"),
                 values.get("story"),
                 item_id,

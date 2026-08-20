@@ -70,6 +70,8 @@ def test_collection_search_matches_metadata_and_preserves_the_query(tmp_path):
                 "title": "Blue vase",
                 "author": "Anna Nováková",
                 "type": "Ceramic",
+                "origin": "Bohemia",
+                "location": "Living room cabinet",
                 "story": "Found in Brno",
             },
         )
@@ -78,12 +80,16 @@ def test_collection_search_matches_metadata_and_preserves_the_query(tmp_path):
             data={"title": "Wooden chair", "author": "Unknown"},
         )
         response = client.get("/", params={"q": "ceramic"})
+        location_response = client.get("/", params={"q": "living room"})
+        origin_response = client.get("/", params={"q": "Bohemia"})
 
     assert response.status_code == 200
     assert "Blue vase" in response.text
     assert "Wooden chair" not in response.text
     assert 'value="ceramic"' in response.text
     assert "1 object found" in response.text
+    assert "Blue vase" in location_response.text
+    assert "Blue vase" in origin_response.text
 
 
 def test_home_assistant_mode_rejects_direct_connections(tmp_path, monkeypatch):
@@ -274,6 +280,9 @@ def test_object_detail_shows_metadata_and_all_photos(tmp_path):
             data={
                 "title": "Glass figure",
                 "author": "Unknown maker",
+                "origin": "Czechoslovakia",
+                "location": "Hall cabinet",
+                "seller": "Old Town Antiques",
                 "story": "Found together.\nKept together.",
             },
             files=[
@@ -288,7 +297,13 @@ def test_object_detail_shows_metadata_and_all_photos(tmp_path):
     assert 'href="/items/1"' in collection_page.text
     assert "Glass figure" in detail_page.text
     assert "Unknown maker" in detail_page.text
+    assert "Czechoslovakia" in detail_page.text
+    assert "Hall cabinet" in detail_page.text
+    assert "Acquired from" in detail_page.text
+    assert "Old Town Antiques" in detail_page.text
     assert "Found together.\nKept together." in detail_page.text
+    assert 'class="object-card__location"' in collection_page.text
+    assert "Hall cabinet" in collection_page.text
     assert detail_page.text.index("Edit object") < detail_page.text.index("Delete object")
     assert detail_page.text.index("Manage photos") < detail_page.text.index("Delete object")
     assert detail_page.text.index('<div class="record-actions">') > detail_page.text.index(
@@ -325,8 +340,10 @@ def test_metadata_can_be_edited_without_changing_photos_or_date_added(tmp_path):
                 "author": "New author",
                 "date_created": "2020-05-06",
                 "type": "Figurine",
+                "origin": "Prague",
                 "date_acquired": "2026-08-19",
                 "seller": "Market",
+                "location": "Office shelf",
                 "price": "250 CZK",
                 "story": "A revised story",
             },
@@ -347,6 +364,8 @@ def test_metadata_can_be_edited_without_changing_photos_or_date_added(tmp_path):
         photos = connection.execute("SELECT * FROM photos WHERE item_id = 1").fetchall()
     assert after["title"] == "New title"
     assert after["author"] == "New author"
+    assert after["origin"] == "Prague"
+    assert after["location"] == "Office shelf"
     assert after["date_added"] == before["date_added"]
     assert len(photos) == 1
     assert photos[0]["id"] == photo["id"]
@@ -390,8 +409,10 @@ def test_edit_form_keeps_empty_optional_fields_empty(tmp_path):
         "author",
         "date_created",
         "type",
+        "origin",
         "date_acquired",
         "seller",
+        "location",
         "price",
         "story",
     ):

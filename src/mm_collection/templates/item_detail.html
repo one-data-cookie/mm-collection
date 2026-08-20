@@ -68,11 +68,17 @@
             {% if item.date_created %}
               <div><dt>Date created</dt><dd>{{ item.date_created }}</dd></div>
             {% endif %}
+            {% if item.origin %}
+              <div><dt>Origin</dt><dd>{{ item.origin }}</dd></div>
+            {% endif %}
             {% if item.date_acquired %}
               <div><dt>Date acquired</dt><dd>{{ item.date_acquired }}</dd></div>
             {% endif %}
             {% if item.seller %}
-              <div><dt>Seller</dt><dd>{{ item.seller }}</dd></div>
+              <div><dt>Acquired from</dt><dd>{{ item.seller }}</dd></div>
+            {% endif %}
+            {% if item.location %}
+              <div><dt>Location</dt><dd>{{ item.location }}</dd></div>
             {% endif %}
             {% if item.price %}
               <div><dt>Price</dt><dd>{{ item.price }}</dd></div>

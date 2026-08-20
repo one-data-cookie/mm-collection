@@ -2,7 +2,7 @@ import sqlite3
 
 import pytest
 
-from mm_collection.database import apply_migrations, connect
+from mm_collection.database import _initial_schema, apply_migrations, connect
 
 
 def test_startup_creates_schema_and_is_repeatable(tmp_path):
@@ -24,7 +24,48 @@ def test_startup_creates_schema_and_is_repeatable(tmp_path):
         ).fetchall()
 
     assert {"items", "photos"} <= tables
-    assert [tuple(row) for row in migrations] == [(1, "initial_schema")]
+    assert [tuple(row) for row in migrations] == [
+        (1, "initial_schema"),
+        (2, "add_location_and_origin"),
+    ]
+
+
+def test_location_migration_preserves_existing_items(tmp_path):
+    path = tmp_path / "collection.sqlite"
+
+    with connect(path) as connection:
+        _initial_schema(connection)
+        connection.execute(
+            """
+            CREATE TABLE schema_migrations (
+                version INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                applied_at TEXT NOT NULL DEFAULT (
+                    strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+                )
+            )
+            """
+        )
+        connection.execute(
+            "INSERT INTO schema_migrations(version, name) VALUES (1, 'initial_schema')"
+        )
+        connection.execute("INSERT INTO items(title) VALUES ('Existing object')")
+
+    apply_migrations(path)
+
+    with connect(path) as connection:
+        item = connection.execute("SELECT * FROM items").fetchone()
+        migrations = connection.execute(
+            "SELECT version, name FROM schema_migrations ORDER BY version"
+        ).fetchall()
+
+    assert item["title"] == "Existing object"
+    assert item["location"] is None
+    assert item["origin"] is None
+    assert [tuple(row) for row in migrations] == [
+        (1, "initial_schema"),
+        (2, "add_location_and_origin"),
+    ]
 
 
 def test_item_and_photo_constraints(tmp_path):

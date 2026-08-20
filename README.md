@@ -11,6 +11,10 @@ Existing objects and their metadata can be edited. Photographs can be added,
 captioned, reordered, made primary, or removed. Object and photograph deletion
 also removes the corresponding local files.
 
+Objects can also record an optional origin and current location. Collection
+search covers titles, makers, types, dates, acquisition details, origin,
+location, and stories.
+
 ## Requirements
 
 - Python 3.11 or newer

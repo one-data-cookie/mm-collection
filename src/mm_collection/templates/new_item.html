@@ -52,6 +52,14 @@
             >
           </label>
           <label>
+            <span>Origin</span>
+            <input
+              name="origin"
+              value="{{ values.get('origin') or '' }}"
+              placeholder="e.g. Prague or Japan"
+            >
+          </label>
+          <label>
             <span>Date acquired</span>
             <input
               type="date"
@@ -60,8 +68,16 @@
             >
           </label>
           <label>
-            <span>Seller</span>
+            <span>Acquired from</span>
             <input name="seller" value="{{ values.get('seller') or '' }}">
+          </label>
+          <label>
+            <span>Location</span>
+            <input
+              name="location"
+              value="{{ values.get('location') or '' }}"
+              placeholder="e.g. Living room cabinet"
+            >
           </label>
           <label>
             <span>Price</span>
