@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.6
+
+- Put frontend fingerprints directly in asset paths so Home Assistant Ingress
+  cannot serve an older stylesheet while ignoring query parameters.
+
 ## 0.1.5
 
 - Fingerprint frontend asset URLs so Home Assistant cannot reuse stale CSS or

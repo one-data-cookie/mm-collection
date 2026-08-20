@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from PIL import Image
 
 from mm_collection.database import connect
-from mm_collection.main import create_app
+from mm_collection.main import ASSET_VERSION, create_app
 
 
 def test_index_returns_collection_page(tmp_path):
@@ -38,7 +38,9 @@ def test_home_assistant_ingress_uses_same_origin_paths(tmp_path):
             "/",
             headers=headers,
         )
-        stylesheet = client.get("/static/app.css", headers=headers)
+        stylesheet = client.get(
+            f"/static/{ASSET_VERSION}/app.css", headers=headers
+        )
         redirect = client.post(
             "/items/new",
             data={"title": "Ingress object"},
@@ -46,22 +48,17 @@ def test_home_assistant_ingress_uses_same_origin_paths(tmp_path):
             follow_redirects=False,
         )
         detail = client.get("/items/1", headers=headers)
-        script = client.get("/static/app.js", headers=headers)
+        script = client.get(f"/static/{ASSET_VERSION}/app.js", headers=headers)
 
     assert page.status_code == 200
     assert f'href="{ingress_path}/items/new"' in page.text
-    stylesheet_url = re.search(
-        rf'href="({ingress_path}/static/app\.css\?v=[0-9a-f]{{12}})"', page.text
+    assert (
+        f'href="{ingress_path}/static/{ASSET_VERSION}/app.css"' in page.text
     )
-    assert stylesheet_url is not None
     assert "http://example.ui.nabu.casa" not in page.text
     assert stylesheet.status_code == 200
     assert detail.status_code == 200
-    script_url = re.search(
-        rf'src="({ingress_path}/static/app\.js\?v=[0-9a-f]{{12}})"', detail.text
-    )
-    assert script_url is not None
-    assert stylesheet_url.group(1).split("?v=")[1] == script_url.group(1).split("?v=")[1]
+    assert f'src="{ingress_path}/static/{ASSET_VERSION}/app.js"' in detail.text
     assert script.status_code == 200
     assert redirect.status_code == 303
     assert redirect.headers["location"] == f"{ingress_path}/"

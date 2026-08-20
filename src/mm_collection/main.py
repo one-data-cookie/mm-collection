@@ -76,7 +76,7 @@ def _asset_version() -> str:
     return digest.hexdigest()[:12]
 
 
-templates.env.globals["asset_version"] = _asset_version()
+ASSET_VERSION = _asset_version()
 
 
 def create_app(db_path: Path | None = None) -> FastAPI:
@@ -108,7 +108,7 @@ def create_app(db_path: Path | None = None) -> FastAPI:
         return await call_next(request)
 
     application.mount(
-        "/static",
+        f"/static/{ASSET_VERSION}",
         StaticFiles(directory=STATIC_DIRECTORY),
         name="static",
     )

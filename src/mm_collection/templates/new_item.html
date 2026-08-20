@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% if editing %}Edit {{ values.title }}{% else %}Add an object{% endif %} · M&amp;M Collection</title>
-    <link rel="stylesheet" href="{{ path_for(request, 'static', path='/app.css') }}?v={{ asset_version }}">
+    <link rel="stylesheet" href="{{ path_for(request, 'static', path='/app.css') }}">
   </head>
   <body class="admin-page">
     <header class="site-header">
