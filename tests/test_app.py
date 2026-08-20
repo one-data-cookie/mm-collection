@@ -50,11 +50,18 @@ def test_home_assistant_ingress_uses_same_origin_paths(tmp_path):
 
     assert page.status_code == 200
     assert f'href="{ingress_path}/items/new"' in page.text
-    assert f'href="{ingress_path}/static/app.css"' in page.text
+    stylesheet_url = re.search(
+        rf'href="({ingress_path}/static/app\.css\?v=[0-9a-f]{{12}})"', page.text
+    )
+    assert stylesheet_url is not None
     assert "http://example.ui.nabu.casa" not in page.text
     assert stylesheet.status_code == 200
     assert detail.status_code == 200
-    assert f'src="{ingress_path}/static/app.js"' in detail.text
+    script_url = re.search(
+        rf'src="({ingress_path}/static/app\.js\?v=[0-9a-f]{{12}})"', detail.text
+    )
+    assert script_url is not None
+    assert stylesheet_url.group(1).split("?v=")[1] == script_url.group(1).split("?v=")[1]
     assert script.status_code == 200
     assert redirect.status_code == 303
     assert redirect.headers["location"] == f"{ingress_path}/"

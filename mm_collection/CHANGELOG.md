@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.5
+
+- Fingerprint frontend asset URLs so Home Assistant cannot reuse stale CSS or
+  JavaScript after an app update.
+
 ## 0.1.4
 
 - Add optional Location and Origin metadata while preserving existing objects.

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from hashlib import sha256
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import date
@@ -31,6 +32,7 @@ from .database import (
 )
 
 PACKAGE_DIRECTORY = Path(__file__).parent
+STATIC_DIRECTORY = PACKAGE_DIRECTORY / "static"
 templates = Jinja2Templates(directory=PACKAGE_DIRECTORY / "templates")
 ISO_DATE_FIELDS = ("date_acquired",)
 INGRESS_PROXY_ADDRESSES = {"172.30.32.2", "127.0.0.1", "::1"}
@@ -67,6 +69,16 @@ def _path_for(request: Request, name: str, **path_params: object) -> str:
 templates.env.globals["path_for"] = _path_for
 
 
+def _asset_version() -> str:
+    digest = sha256()
+    for filename in ("app.css", "app.js"):
+        digest.update((STATIC_DIRECTORY / filename).read_bytes())
+    return digest.hexdigest()[:12]
+
+
+templates.env.globals["asset_version"] = _asset_version()
+
+
 def create_app(db_path: Path | None = None) -> FastAPI:
     target = db_path or database_path()
     photos = target.parent / "photos"
@@ -97,7 +109,7 @@ def create_app(db_path: Path | None = None) -> FastAPI:
 
     application.mount(
         "/static",
-        StaticFiles(directory=PACKAGE_DIRECTORY / "static"),
+        StaticFiles(directory=STATIC_DIRECTORY),
         name="static",
     )
     application.mount(

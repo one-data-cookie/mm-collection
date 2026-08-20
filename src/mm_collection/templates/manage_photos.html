@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Manage photographs · {{ item.title }} · M&amp;M Collection</title>
-    <link rel="stylesheet" href="{{ path_for(request, 'static', path='/app.css') }}">
+    <link rel="stylesheet" href="{{ path_for(request, 'static', path='/app.css') }}?v={{ asset_version }}">
   </head>
   <body class="admin-page">
     <header class="site-header">
