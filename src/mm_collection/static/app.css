@@ -68,45 +68,42 @@ textarea {
 .wordmark__mark {
   position: relative;
   display: inline-block;
-  flex: 0 0 6.5rem;
-  width: 6.5rem;
-  height: 4rem;
+  flex: 0 0 7.75rem;
+  width: 7.75rem;
+  height: 4.15rem;
   color: currentColor;
   font-family: Didot, "Bodoni 72", "Times New Roman", serif;
   line-height: 1;
-}
-
-.wordmark__letter,
-.wordmark__ampersand {
-  position: absolute;
-  bottom: 0;
-  display: block;
+  white-space: nowrap;
 }
 
 .wordmark__letter {
-  font-size: 4.2rem;
+  position: absolute;
+  bottom: 0;
+  font-size: 4.35rem;
   font-weight: 700;
-  letter-spacing: -0.15em;
-  transform: scaleX(0.82);
-  transform-origin: bottom;
+  transform: scaleX(0.8);
 }
 
-.wordmark__letter--first {
-  left: -0.35rem;
+.wordmark__letter:first-child {
+  left: 0;
+  transform-origin: bottom left;
 }
 
-.wordmark__letter--last {
-  right: 0.2rem;
+.wordmark__letter:last-child {
+  right: 0;
+  transform-origin: bottom right;
 }
 
 .wordmark__ampersand {
-  z-index: 1;
+  position: absolute;
   left: 50%;
-  bottom: 0.1rem;
+  bottom: 0.02rem;
+  z-index: 1;
   font-size: 3rem;
   font-weight: 700;
-  letter-spacing: -0.15em;
-  transform: translateX(-53%) scaleX(0.86);
+  transform: translateX(-50%) scaleX(0.88);
+  transform-origin: bottom center;
 }
 
 .wordmark__name {
@@ -740,18 +737,18 @@ small {
     padding-block: 0.55rem;
   }
 
-  .wordmark__mark {
-    flex-basis: 5.3rem;
-    width: 5.3rem;
-    height: 3.4rem;
-  }
-
   .wordmark__letter {
-    font-size: 3.55rem;
+    font-size: 3.45rem;
   }
 
   .wordmark__ampersand {
-    font-size: 2.55rem;
+    font-size: 2.4rem;
+  }
+
+  .wordmark__mark {
+    flex-basis: 6.2rem;
+    width: 6.2rem;
+    height: 3.4rem;
   }
 
   .wordmark__name {
