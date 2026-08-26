@@ -72,16 +72,16 @@
             <input name="seller" value="{{ values.get('seller') or '' }}">
           </label>
           <label>
+            <span>Price</span>
+            <input name="price" value="{{ values.get('price') or '' }}" inputmode="decimal">
+          </label>
+          <label>
             <span>Location</span>
             <input
               name="location"
               value="{{ values.get('location') or '' }}"
               placeholder="e.g. Living room cabinet"
             >
-          </label>
-          <label>
-            <span>Price</span>
-            <input name="price" value="{{ values.get('price') or '' }}" inputmode="decimal">
           </label>
         </div>
 
