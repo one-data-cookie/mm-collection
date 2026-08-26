@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.7
+
+- Add a simple thumbnail strip to object pages; selecting a thumbnail swaps the
+  main photograph and highlights the active image.
+- Pad photographs into consistent frames so portrait and landscape objects
+  align on collection and detail pages without cropping.
+- Refine the M&M wordmark and place Price before Location in object forms.
+
 ## 0.1.6
 
 - Embed the stylesheet in each fresh HTML response so Home Assistant Ingress
