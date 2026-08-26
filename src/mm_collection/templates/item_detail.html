@@ -17,24 +17,36 @@
       <div class="object-detail__layout">
         <section class="object-visuals" aria-label="Photographs">
           {% if item.primary_photo %}
-            <div class="object-hero-frame">
-              <img
-                class="object-hero"
-                src="{{ path_for(request, 'media', path='/' ~ item.primary_photo.display_path) }}"
-                alt="{{ item.primary_photo.caption or item.title }}"
-              >
-            </div>
-            {% if item.additional_photos %}
-              <div class="photo-gallery">
-                {% for photo in item.additional_photos %}
-                  <img
-                    src="{{ path_for(request, 'media', path='/' ~ photo.display_path) }}"
-                    alt="{{ photo.caption or item.title }}"
-                    loading="lazy"
+            <div class="object-gallery" data-photo-gallery>
+              <div class="object-hero-frame">
+                <img
+                  class="object-hero"
+                  src="{{ path_for(request, 'media', path='/' ~ item.primary_photo.display_path) }}"
+                  alt="{{ item.primary_photo.caption or item.title }}"
+                  data-gallery-image
+                >
+              </div>
+
+              <div class="photo-filmstrip" aria-label="Choose a photograph">
+                {% for photo in item.photos %}
+                  <button
+                    class="photo-thumbnail{% if photo.id == item.primary_photo.id %} is-selected{% endif %}"
+                    type="button"
+                    aria-label="View photograph {{ loop.index }} of {{ item.photos | length }}{% if photo.caption %}: {{ photo.caption }}{% endif %}"
+                    aria-current="{% if photo.id == item.primary_photo.id %}true{% else %}false{% endif %}"
+                    data-gallery-thumbnail
+                    data-gallery-src="{{ path_for(request, 'media', path='/' ~ photo.display_path) }}"
+                    data-gallery-alt="{{ photo.caption or item.title }}"
                   >
+                    <img
+                      src="{{ path_for(request, 'media', path='/' ~ photo.display_path) }}"
+                      alt=""
+                      loading="{% if photo.id == item.primary_photo.id %}eager{% else %}lazy{% endif %}"
+                    >
+                  </button>
                 {% endfor %}
               </div>
-            {% endif %}
+            </div>
           {% else %}
             <div class="object-hero-frame object-hero object-card__placeholder">
               <span>No photograph</span>

@@ -286,15 +286,18 @@ p {
 }
 
 .object-card__link {
-  display: block;
+  display: grid;
+  aspect-ratio: 3 / 4;
   overflow: hidden;
   background: #292b2e;
+  place-items: center;
 }
 
 .object-card__image {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: contain;
   background: #292b2e;
   transition: transform 220ms ease;
 }
@@ -305,7 +308,6 @@ p {
 
 .object-card__placeholder {
   display: grid;
-  min-height: 19rem;
   place-items: center;
   color: #aaa7a1;
   font-size: 0.86rem;
@@ -414,18 +416,20 @@ p {
 }
 
 .object-hero-frame {
-  display: grid;
-  min-height: min(72vh, 52rem);
+  display: flex;
+  height: min(58vh, 46rem);
   padding: clamp(0.8rem, 2vw, 2rem);
-  place-items: center;
+  align-items: center;
+  justify-content: center;
   background: #efede7;
 }
 
 .object-hero {
   display: block;
   width: auto;
+  height: auto;
   max-width: 100%;
-  max-height: min(78vh, 58rem);
+  max-height: 100%;
   object-fit: contain;
 }
 
@@ -434,18 +438,43 @@ p {
   color: #67635d;
 }
 
-.photo-gallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
-  gap: 0.75rem;
+.photo-filmstrip {
+  display: flex;
+  gap: 0.6rem;
   margin-top: 0.75rem;
+  padding-bottom: 0.5rem;
+  overflow-x: auto;
 }
 
-.photo-gallery img {
+.photo-thumbnail {
+  flex: 0 0 6rem;
+  padding: 0;
+  overflow: hidden;
+  background: #2c2e31;
+  border: 2px solid transparent;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.photo-thumbnail:hover {
+  opacity: 0.88;
+}
+
+.photo-thumbnail:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+
+.photo-thumbnail.is-selected {
+  border-color: #b5233d;
+  opacity: 1;
+}
+
+.photo-thumbnail img {
+  display: block;
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
-  background: #2c2e31;
 }
 
 .object-record {
@@ -701,7 +730,7 @@ small {
   }
 
   .object-hero-frame {
-    min-height: 24rem;
+    min-height: 0;
   }
 }
 
@@ -757,7 +786,6 @@ small {
   }
 
   .object-hero-frame {
-    min-height: 19rem;
     padding: 0.65rem;
   }
 

@@ -309,6 +309,12 @@ def test_object_detail_shows_metadata_and_all_photos(tmp_path):
     assert detail_page.text.index('<div class="record-actions">') > detail_page.text.index(
         '<article class="object-record">'
     )
+    assert 'data-photo-gallery' in detail_page.text
+    assert 'data-gallery-image' in detail_page.text
+    assert detail_page.text.count('data-gallery-thumbnail') == 2
+    assert detail_page.text.count('aria-current="true"') == 1
+    assert 'data-gallery-previous' not in detail_page.text
+    assert 'data-gallery-next' not in detail_page.text
     with connect(database) as connection:
         photo_paths = [
             row["display_path"]
