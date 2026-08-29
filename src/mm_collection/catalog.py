@@ -33,6 +33,7 @@ ORIGINAL_EXTENSIONS = {
     "AVIF": ".avif",
     "HEIF": ".heic",
     "JPEG": ".jpg",
+    "MPO": ".jpg",
     "PNG": ".png",
     "WEBP": ".webp",
 }

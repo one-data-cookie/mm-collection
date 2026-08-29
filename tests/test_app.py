@@ -114,6 +114,15 @@ def image_bytes(size=(80, 60), color="red"):
     return output.getvalue()
 
 
+def mpo_bytes():
+    """Return an iPhone-style JPEG with a main image and grayscale gain map."""
+    output = BytesIO()
+    main = Image.new("RGB", (240, 180), "green")
+    gain_map = Image.new("L", (120, 90), 128)
+    main.save(output, "MPO", save_all=True, append_images=[gain_map])
+    return output.getvalue()
+
+
 def test_title_only_item_can_be_added_and_browsed(tmp_path):
     database = tmp_path / "collection.sqlite"
     app = create_app(database)
@@ -177,6 +186,36 @@ def test_multiple_photos_are_preserved_resized_and_served(tmp_path):
     assert media_response.status_code == 200
     assert media_response.headers["content-type"] == "image/jpeg"
     assert photos[0]["display_path"] in page.text
+
+
+def test_iphone_mpo_photo_is_preserved_and_converted_for_display(tmp_path):
+    database = tmp_path / "collection.sqlite"
+    original = mpo_bytes()
+    app = create_app(database)
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/items/new",
+            data={"title": "Plate"},
+            files={"photos": ("IMG_0064.JPG", original, "image/jpeg")},
+            follow_redirects=False,
+        )
+
+    assert response.status_code == 303
+    with connect(database) as connection:
+        photo = connection.execute("SELECT * FROM photos").fetchone()
+
+    original_path = tmp_path / "photos" / photo["original_path"]
+    display_path = tmp_path / "photos" / photo["display_path"]
+    assert original_path.suffix == ".jpg"
+    assert original_path.read_bytes() == original
+    with Image.open(original_path) as stored_original:
+        assert stored_original.format == "MPO"
+        assert stored_original.n_frames == 2
+    with Image.open(display_path) as display:
+        assert display.format == "JPEG"
+        assert display.mode == "RGB"
+        assert display.size == (240, 180)
 
 
 def test_bad_photo_rolls_back_database_and_files(tmp_path):
