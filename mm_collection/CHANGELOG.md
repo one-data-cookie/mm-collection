@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.8
+
+- Accept iPhone JPEG photographs containing an MPO HDR gain-map frame, preserve
+  the complete original, and generate a standard JPEG display copy.
+
 ## 0.1.7
 
 - Add a simple thumbnail strip to object pages; selecting a thumbnail swaps the
