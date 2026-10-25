@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.9
+
+- Rename the date fields to Made and Acquired, preserving existing catalogue
+  data with transactional database migrations.
+- Replace the Type text field with an optional dropdown limited to Ceramics,
+  Glass, Pictures, Objects, and Textiles, with server-side validation.
+- Simplify field labels, refine placeholders and dropdown spacing, and show
+  empty Type and Acquired controls in grey until a value is entered.
+- Keep Price as free text for amounts with currencies such as `100 CZK` and
+  `200 GBP`, with a standard keyboard for entering currency names.
+
 ## 0.1.8
 
 - Accept iPhone JPEG photographs containing an MPO HDR gain-map frame, preserve
