@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.10
+
+- Use regular-weight text in form fields instead of inheriting bold labels.
+- Match the Acquired date placeholder colour to the other empty fields.
+- Add example placeholders for Title, Seller, and Story.
+
 ## 0.1.9
 
 - Rename the date fields to Made and Acquired, preserving existing catalogue

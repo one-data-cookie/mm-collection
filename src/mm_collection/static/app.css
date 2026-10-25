@@ -600,6 +600,7 @@ label strong {
 .admin-page input,
 .admin-page select,
 .admin-page textarea {
+  font-weight: 400;
   width: 100%;
   border: 1px solid #918b82;
   border-radius: 0;
@@ -640,8 +641,20 @@ label strong {
   color-scheme: light;
 }
 
-.admin-page input[type="date"]::-webkit-datetime-edit {
+.admin-page input[type="date"]::-webkit-datetime-edit,
+.admin-page input[type="date"]::-webkit-datetime-edit-text,
+.admin-page input[type="date"]::-webkit-datetime-edit-day-field,
+.admin-page input[type="date"]::-webkit-datetime-edit-month-field,
+.admin-page input[type="date"]::-webkit-datetime-edit-year-field {
   color: inherit;
+  -webkit-text-fill-color: currentColor;
+  opacity: 1;
+}
+
+.admin-page input[type="date"]::-webkit-date-and-time-value {
+  color: inherit;
+  -webkit-text-fill-color: currentColor;
+  opacity: 1;
 }
 
 small {

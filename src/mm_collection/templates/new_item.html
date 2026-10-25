@@ -24,7 +24,7 @@
       <form method="post" enctype="multipart/form-data" class="object-form">
         <label>
           <span>Title <strong>Required</strong></span>
-          <input name="title" value="{{ values.get('title') or '' }}" required autofocus>
+          <input name="title" value="{{ values.get('title') or '' }}" placeholder="e.g. Blue ceramic vase" required autofocus>
         </label>
 
         {% if not editing %}
@@ -83,7 +83,11 @@
           </label>
           <label>
             <span>Seller</span>
-            <input name="seller" value="{{ values.get('seller') or '' }}">
+            <input
+              name="seller"
+              value="{{ values.get('seller') or '' }}"
+              placeholder="e.g. Christie's London"
+            >
           </label>
           <label>
             <span>Price</span>
@@ -105,7 +109,11 @@
 
         <label>
           <span>Story</span>
-          <textarea name="story" rows="6">{{ values.get('story') or '' }}</textarea>
+          <textarea
+            name="story"
+            rows="6"
+            placeholder="Write a nice one!"
+          >{{ values.get('story') or '' }}</textarea>
         </label>
 
         <button class="button button--submit" type="submit">{% if editing %}Save changes{% else %}Save object{% endif %}</button>
