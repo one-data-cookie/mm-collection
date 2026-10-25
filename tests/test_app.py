@@ -457,7 +457,45 @@ def test_object_detail_shows_metadata_and_all_photos(tmp_path):
     assert all(path in detail_page.text for path in photo_paths)
 
 
-def test_metadata_can_be_edited_without_changing_photos_or_date_added(tmp_path):
+@pytest.mark.parametrize(
+    ("author", "item_type", "made", "expected"),
+    [
+        (
+            "Harry Fenton / Royal Doulton", "Ceramics", "c1950s–1960s",
+            "Harry Fenton / Royal Doulton · Ceramics, c1950s–1960s",
+        ),
+        ("Maker", "Ceramics", "", "Maker · Ceramics"),
+        ("Maker", "", "c1950s–1960s", "Maker · c1950s–1960s"),
+        ("", "Ceramics", "c1950s–1960s", "Ceramics, c1950s–1960s"),
+        ("Maker", "", "", "Maker"),
+        ("", "Ceramics", "", "Ceramics"),
+        ("", "", "c1950s–1960s", "c1950s–1960s"),
+        ("", "", "", None),
+    ],
+)
+def test_object_byline_spacing_with_optional_fields(
+    tmp_path, author, item_type, made, expected
+):
+    app = create_app(tmp_path / "collection.sqlite")
+    with TestClient(app) as client:
+        response = client.post(
+            "/items/new",
+            data={"title": "Jug", "author": author, "type": item_type, "made": made},
+            follow_redirects=False,
+        )
+        assert response.status_code == 303
+        detail = client.get("/items/1")
+
+    byline = re.search(r'<p class="object-byline">(.*?)</p>', detail.text, re.DOTALL)
+    if expected is None:
+        assert byline is None
+    else:
+        assert byline is not None
+        text = re.sub(r"<[^>]+>", "", byline.group(1))
+        assert text == expected
+
+
+def test_metadata_can_be_edited_without_changing_photos_or_added(tmp_path):
     database = tmp_path / "collection.sqlite"
     original_photo = image_bytes(color="purple")
     app = create_app(database)
@@ -509,7 +547,7 @@ def test_metadata_can_be_edited_without_changing_photos_or_date_added(tmp_path):
     assert after["acquired"] == "2026-08-19"
     assert after["price"] == "250 CZK"
     assert after["location"] == "Office shelf"
-    assert after["date_added"] == before["date_added"]
+    assert after["added"] == before["added"]
     assert len(photos) == 1
     assert photos[0]["id"] == photo["id"]
     assert (tmp_path / "photos" / photo["original_path"]).read_bytes() == original_photo

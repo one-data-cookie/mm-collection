@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.11
+
+- Fix spacing around separators in object bylines, including missing fields.
+- Rename the database timestamp column from `date_added` to `added`, preserving
+  existing timestamps with an automatic migration.
+- Shorten the timestamp label to Added.
+
 ## 0.1.10
 
 - Use regular-weight text in form fields instead of inheriting bold labels.

@@ -59,13 +59,8 @@
           <h1>{{ item.title }}</h1>
 
           {% if item.author or item.type or item.made %}
-            <p class="object-byline">
-              {% if item.author %}{{ item.author }}{% endif %}
-              {% if item.author and (item.type or item.made) %}<span aria-hidden="true"> · </span>{% endif %}
-              {% if item.type %}{{ item.type }}{% endif %}
-              {% if item.type and item.made %}, {% endif %}
-              {% if item.made %}{{ item.made }}{% endif %}
-            </p>
+            {% set object_description = [item.type, item.made] | select | join(', ') %}
+            <p class="object-byline">{{ item.author or '' }}{% if item.author and object_description %}<span aria-hidden="true"> · </span>{% endif %}{{ object_description }}</p>
           {% endif %}
 
           {% if item.story %}<p class="object-story">{{ item.story }}</p>{% endif %}
@@ -96,8 +91,8 @@
               <div><dt>Location</dt><dd>{{ item.location }}</dd></div>
             {% endif %}
             <div>
-              <dt>Added to collection</dt>
-              <dd><time datetime="{{ item.date_added }}" data-local-date>{{ item.date_added[:10] }}</time></dd>
+              <dt>Added</dt>
+              <dd><time datetime="{{ item.added }}" data-local-date>{{ item.added[:10] }}</time></dd>
             </div>
           </dl>
 

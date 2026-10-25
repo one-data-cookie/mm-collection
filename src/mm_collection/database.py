@@ -95,12 +95,17 @@ def _rename_acquired(connection: sqlite3.Connection) -> None:
     connection.execute("ALTER TABLE items RENAME COLUMN acquired_on TO acquired")
 
 
+def _rename_added(connection: sqlite3.Connection) -> None:
+    connection.execute("ALTER TABLE items RENAME COLUMN date_added TO added")
+
+
 MIGRATIONS: tuple[Migration, ...] = (
     (1, "initial_schema", _initial_schema),
     (2, "add_location_and_origin", _add_location_and_origin),
     (3, "rename_item_dates", _rename_item_dates),
     (4, "rename_acquired_on", _rename_acquired_on),
     (5, "rename_acquired", _rename_acquired),
+    (6, "rename_added", _rename_added),
 )
 
 
@@ -174,7 +179,7 @@ def list_items(
                 ON photos.item_id = items.id
                 AND photos.is_primary = 1
             {where}
-            ORDER BY items.date_added DESC, items.id DESC
+            ORDER BY items.added DESC, items.id DESC
             """,
             parameters,
         ).fetchall()

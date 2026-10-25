@@ -31,6 +31,7 @@ def test_startup_creates_schema_and_is_repeatable(tmp_path):
         (3, "rename_item_dates"),
         (4, "rename_acquired_on"),
         (5, "rename_acquired"),
+        (6, "rename_added"),
     ]
 
 
@@ -72,10 +73,11 @@ def test_location_migration_preserves_existing_items(tmp_path):
         (3, "rename_item_dates"),
         (4, "rename_acquired_on"),
         (5, "rename_acquired"),
+        (6, "rename_added"),
     ]
 
 
-@pytest.mark.parametrize("schema_version", [2, 3, 4])
+@pytest.mark.parametrize("schema_version", [2, 3, 4, 5])
 def test_date_rename_preserves_existing_items_and_photos(tmp_path, schema_version):
     path = tmp_path / "collection.sqlite"
     made_column = "date_created" if schema_version == 2 else "made"
@@ -83,6 +85,7 @@ def test_date_rename_preserves_existing_items_and_photos(tmp_path, schema_versio
         2: "date_acquired",
         3: "acquired",
         4: "acquired_on",
+        5: "acquired",
     }[schema_version]
 
     with connect(path) as connection:
@@ -130,6 +133,7 @@ def test_date_rename_preserves_existing_items_and_photos(tmp_path, schema_versio
     for before, after in zip(before_items, after_items, strict=True):
         before["made"] = before.pop(made_column)
         before["acquired"] = before.pop(acquired_column)
+        before["added"] = before.pop("date_added")
         assert after == before
     assert after_photo == before_photo
 
@@ -146,7 +150,7 @@ def test_failed_migration_rolls_back_schema_and_data(tmp_path, monkeypatch):
         raise RuntimeError("Migration failed")
 
     monkeypatch.setattr(
-        database, "MIGRATIONS", MIGRATIONS + ((6, "failing_migration", failing_migration),)
+        database, "MIGRATIONS", MIGRATIONS + ((7, "failing_migration", failing_migration),)
     )
     with pytest.raises(RuntimeError, match="Migration failed"):
         apply_migrations(path)
@@ -158,7 +162,7 @@ def test_failed_migration_rolls_back_schema_and_data(tmp_path, monkeypatch):
         ]
     assert item["made"] == "c. 1950"
     assert "partial_rename" not in item.keys()
-    assert versions == [1, 2, 3, 4, 5]
+    assert versions == [1, 2, 3, 4, 5, 6]
 
 
 def test_item_and_photo_constraints(tmp_path):
@@ -173,9 +177,9 @@ def test_item_and_photo_constraints(tmp_path):
             "INSERT INTO items(title) VALUES ('Dispenser')"
         ).lastrowid
         row = connection.execute(
-            "SELECT date_added FROM items WHERE id = ?", (item_id,)
+            "SELECT added FROM items WHERE id = ?", (item_id,)
         ).fetchone()
-        assert row["date_added"].endswith("Z")
+        assert row["added"].endswith("Z")
 
         with pytest.raises(sqlite3.IntegrityError):
             connection.execute(
