@@ -112,8 +112,17 @@
           <textarea
             name="story"
             rows="6"
-            placeholder="Write a nice one!"
+            placeholder="How did you find it? Tell the story of the discovery, purchase or gift."
           >{{ values.get('story') or '' }}</textarea>
+        </label>
+
+        <label>
+          <span>Background</span>
+          <textarea
+            name="background"
+            rows="6"
+            placeholder="What is its story? Share its history, details about the maker or why it matters."
+          >{{ values.get('background') or '' }}</textarea>
         </label>
 
         <button class="button button--submit" type="submit">{% if editing %}Save changes{% else %}Save object{% endif %}</button>

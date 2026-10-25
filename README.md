@@ -13,7 +13,9 @@ also removes the corresponding local files.
 
 Objects can also record an optional origin and current location. Collection
 search covers titles, makers, types, dates, acquisition details, origin,
-location, and stories.
+location, stories, and background. Two optional fields separate **Story**
+(discovery, purchase, gifts, and memories) from **Background** (its history,
+maker, and context). Existing stories are preserved.
 
 ## Requirements
 

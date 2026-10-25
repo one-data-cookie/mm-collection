@@ -76,6 +76,7 @@ def test_collection_search_matches_metadata_and_preserves_the_query(tmp_path):
                 "origin": "Bohemia",
                 "location": "Living room cabinet",
                 "story": "Found in Brno",
+                "background": "Made for the Brussels exhibition",
             },
         )
         client.post(
@@ -87,6 +88,8 @@ def test_collection_search_matches_metadata_and_preserves_the_query(tmp_path):
         origin_response = client.get("/", params={"q": "Bohemia"})
         made_response = client.get("/", params={"q": "1950"})
         acquired_response = client.get("/", params={"q": "2026-08-19"})
+        story_response = client.get("/", params={"q": "Brno"})
+        background_response = client.get("/", params={"q": "Brussels"})
 
     assert response.status_code == 200
     assert "Blue vase" in response.text
@@ -97,6 +100,10 @@ def test_collection_search_matches_metadata_and_preserves_the_query(tmp_path):
     assert "Blue vase" in origin_response.text
     assert "Blue vase" in made_response.text
     assert "Blue vase" in acquired_response.text
+    for matching_response in (story_response, background_response):
+        assert matching_response.status_code == 200
+        assert "Blue vase" in matching_response.text
+        assert "Wooden chair" not in matching_response.text
 
 
 def test_home_assistant_mode_rejects_direct_connections(tmp_path, monkeypatch):
@@ -418,6 +425,7 @@ def test_object_detail_shows_metadata_and_all_photos(tmp_path):
                 "location": "Hall cabinet",
                 "seller": "Old Town Antiques",
                 "story": "Found together.\nKept together.",
+                "background": "A studio piece.\nMade by hand.",
             },
             files=[
                 ("photos", ("front.jpg", image_bytes(color="green"), "image/jpeg")),
@@ -436,6 +444,9 @@ def test_object_detail_shows_metadata_and_all_photos(tmp_path):
     assert "<dt>Seller</dt>" in detail_page.text
     assert "Old Town Antiques" in detail_page.text
     assert "Found together.\nKept together." in detail_page.text
+    assert "A studio piece.\nMade by hand." in detail_page.text
+    assert "<h2>Story</h2>" in detail_page.text
+    assert "<h2>Background</h2>" in detail_page.text
     assert 'class="object-card__location"' in collection_page.text
     assert "Hall cabinet" in collection_page.text
     assert detail_page.text.index("Edit object") < detail_page.text.index("Delete object")
@@ -524,10 +535,12 @@ def test_metadata_can_be_edited_without_changing_photos_or_added(tmp_path):
                 "location": "Office shelf",
                 "price": "250 CZK",
                 "story": "A revised story",
+                "background": "A revised history",
             },
             follow_redirects=False,
         )
         detail_page = client.get("/items/1")
+        updated_edit_page = client.get("/items/1/edit")
 
     assert edit_page.status_code == 200
     assert 'value="Old title"' in edit_page.text
@@ -536,6 +549,9 @@ def test_metadata_can_be_edited_without_changing_photos_or_added(tmp_path):
     assert response.headers["location"].endswith("/items/1")
     assert "New title" in detail_page.text
     assert "A revised story" in detail_page.text
+    assert "A revised history" in detail_page.text
+    assert ">A revised story</textarea>" in updated_edit_page.text
+    assert ">A revised history</textarea>" in updated_edit_page.text
 
     with connect(database) as connection:
         after = connection.execute("SELECT * FROM items WHERE id = 1").fetchone()
@@ -547,6 +563,8 @@ def test_metadata_can_be_edited_without_changing_photos_or_added(tmp_path):
     assert after["acquired"] == "2026-08-19"
     assert after["price"] == "250 CZK"
     assert after["location"] == "Office shelf"
+    assert after["story"] == "A revised story"
+    assert after["background"] == "A revised history"
     assert after["added"] == before["added"]
     assert len(photos) == 1
     assert photos[0]["id"] == photo["id"]
@@ -596,8 +614,52 @@ def test_edit_form_keeps_empty_optional_fields_empty(tmp_path):
         "location",
         "price",
         "story",
+        "background",
     ):
         assert item[field] is None
+
+
+@pytest.mark.parametrize("field", ["story", "background"])
+def test_stories_are_independent_optional_and_can_be_cleared(tmp_path, field):
+    database = tmp_path / "collection.sqlite"
+    app = create_app(database)
+    text = "A personal story.\nA second line with <details> & memories."
+    headings = {
+        "story": "Story",
+        "background": "Background",
+    }
+    other = next(name for name in headings if name != field)
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/items/new", data={"title": "Object", field: text},
+            follow_redirects=False,
+        )
+        assert response.status_code == 303
+        detail = client.get("/items/1")
+        assert f"<h2>{headings[field]}</h2>" in detail.text
+        assert f"<h2>{headings[other]}</h2>" not in detail.text
+        assert (
+            "A personal story.\nA second line with &lt;details&gt; &amp; memories."
+            in detail.text
+        )
+
+        invalid_edit = client.post(
+            "/items/1/edit", data={"title": "", field: text}
+        )
+        assert invalid_edit.status_code == 422
+        assert "A personal story." in invalid_edit.text
+        assert "&lt;details&gt; &amp; memories.</textarea>" in invalid_edit.text
+
+        cleared = client.post("/items/1/edit", data={"title": "Object", field: "  "})
+        assert cleared.status_code == 200
+        assert "<h2>Story</h2>" not in cleared.text
+        assert "<h2>Background</h2>" not in cleared.text
+
+    with connect(database) as connection:
+        item = connection.execute("SELECT * FROM items").fetchone()
+    assert item[field] is None
+    assert item[other] is None
 
 
 def test_missing_object_pages_return_404(tmp_path):

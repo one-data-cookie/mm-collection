@@ -26,6 +26,7 @@ ITEM_FIELDS = (
     "price",
     "location",
     "story",
+    "background",
 )
 ITEM_TYPES = ("Ceramics", "Glass", "Pictures", "Objects", "Textiles")
 MAX_PHOTO_BYTES = 30 * 1024 * 1024
@@ -168,8 +169,8 @@ async def create_item(
                 INSERT INTO items(
                     title, author, made, type,
                     origin, acquired, seller, price,
-                    location, story
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    location, story, background
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 tuple(values.get(field) for field in ITEM_FIELDS),
             ).lastrowid

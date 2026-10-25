@@ -99,6 +99,10 @@ def _rename_added(connection: sqlite3.Connection) -> None:
     connection.execute("ALTER TABLE items RENAME COLUMN date_added TO added")
 
 
+def _add_background(connection: sqlite3.Connection) -> None:
+    connection.execute("ALTER TABLE items ADD COLUMN background TEXT")
+
+
 MIGRATIONS: tuple[Migration, ...] = (
     (1, "initial_schema", _initial_schema),
     (2, "add_location_and_origin", _add_location_and_origin),
@@ -106,6 +110,7 @@ MIGRATIONS: tuple[Migration, ...] = (
     (4, "rename_acquired_on", _rename_acquired_on),
     (5, "rename_acquired", _rename_acquired),
     (6, "rename_added", _rename_added),
+    (7, "add_background", _add_background),
 )
 
 
@@ -166,9 +171,10 @@ def list_items(
                 OR COALESCE(items.location, '') LIKE ? ESCAPE '\\'
                 OR COALESCE(items.origin, '') LIKE ? ESCAPE '\\'
                 OR COALESCE(items.story, '') LIKE ? ESCAPE '\\'
+                OR COALESCE(items.background, '') LIKE ? ESCAPE '\\'
             )
         """
-        parameters = (pattern,) * 9
+        parameters = (pattern,) * 10
 
     with connect(path) as connection:
         rows = connection.execute(
@@ -233,7 +239,8 @@ def update_item(
                 seller = ?,
                 price = ?,
                 location = ?,
-                story = ?
+                story = ?,
+                background = ?
             WHERE id = ?
             """,
             (
@@ -247,6 +254,7 @@ def update_item(
                 values.get("price"),
                 values.get("location"),
                 values.get("story"),
+                values.get("background"),
                 item_id,
             ),
         )

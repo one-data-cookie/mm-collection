@@ -4,8 +4,10 @@
 
 M&M Collection is a private catalogue for objects and their photographs. Add an
 object with only a title, or record its maker, dates, type, origin, acquisition,
-location, price, story, and several photographs. Search finds objects across
-their catalogue information.
+location, price, and several photographs. Use **Story** for the discovery,
+purchase, gift, or personal memories, and **Background** for its history,
+maker, and context. Both fields are optional. Existing stories are preserved.
+Search finds objects across their catalogue information, story, and background.
 
 ## How to use it
 

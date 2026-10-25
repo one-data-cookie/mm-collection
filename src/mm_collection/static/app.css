@@ -501,6 +501,17 @@ p {
   color: #e0ddd7;
   font-size: 1rem;
   line-height: 1.65;
+}
+
+.object-story h2 {
+  margin: 0 0 0.6rem;
+  color: #aaa7a1;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.object-story p {
+  margin: 0;
   white-space: pre-line;
 }
 

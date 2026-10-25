@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.12
+
+- Keep Story for how an object was acquired and add Background for its history,
+  maker, and context on add, edit, and detail pages. Search includes both fields.
+- Preserve the existing Story field and its contents while adding Background
+  with an automatic migration.
+
 ## 0.1.11
 
 - Fix spacing around separators in object bylines, including missing fields.

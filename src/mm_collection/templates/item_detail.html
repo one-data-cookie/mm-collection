@@ -63,7 +63,18 @@
             <p class="object-byline">{{ item.author or '' }}{% if item.author and object_description %}<span aria-hidden="true"> · </span>{% endif %}{{ object_description }}</p>
           {% endif %}
 
-          {% if item.story %}<p class="object-story">{{ item.story }}</p>{% endif %}
+          {% if item.background %}
+            <section class="object-story">
+              <h2>Background</h2>
+              <p>{{ item.background }}</p>
+            </section>
+          {% endif %}
+          {% if item.story %}
+            <section class="object-story">
+              <h2>Story</h2>
+              <p>{{ item.story }}</p>
+            </section>
+          {% endif %}
 
           <dl class="object-metadata">
             {% if item.author %}
