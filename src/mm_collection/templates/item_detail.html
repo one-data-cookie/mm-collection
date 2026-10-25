@@ -58,13 +58,13 @@
           <p class="eyebrow">Collection object {{ item.id }}</p>
           <h1>{{ item.title }}</h1>
 
-          {% if item.author or item.type or item.date_created %}
+          {% if item.author or item.type or item.made %}
             <p class="object-byline">
               {% if item.author %}{{ item.author }}{% endif %}
-              {% if item.author and (item.type or item.date_created) %}<span aria-hidden="true"> · </span>{% endif %}
+              {% if item.author and (item.type or item.made) %}<span aria-hidden="true"> · </span>{% endif %}
               {% if item.type %}{{ item.type }}{% endif %}
-              {% if item.type and item.date_created %}, {% endif %}
-              {% if item.date_created %}{{ item.date_created }}{% endif %}
+              {% if item.type and item.made %}, {% endif %}
+              {% if item.made %}{{ item.made }}{% endif %}
             </p>
           {% endif %}
 
@@ -72,28 +72,28 @@
 
           <dl class="object-metadata">
             {% if item.author %}
-              <div><dt>Author or maker</dt><dd>{{ item.author }}</dd></div>
+              <div><dt>Author</dt><dd>{{ item.author }}</dd></div>
+            {% endif %}
+            {% if item.made %}
+              <div><dt>Made</dt><dd>{{ item.made }}</dd></div>
             {% endif %}
             {% if item.type %}
-              <div><dt>Object type</dt><dd>{{ item.type }}</dd></div>
-            {% endif %}
-            {% if item.date_created %}
-              <div><dt>Date created</dt><dd>{{ item.date_created }}</dd></div>
+              <div><dt>Type</dt><dd>{{ item.type }}</dd></div>
             {% endif %}
             {% if item.origin %}
               <div><dt>Origin</dt><dd>{{ item.origin }}</dd></div>
             {% endif %}
-            {% if item.date_acquired %}
-              <div><dt>Date acquired</dt><dd>{{ item.date_acquired }}</dd></div>
+            {% if item.acquired %}
+              <div><dt>Acquired</dt><dd>{{ item.acquired }}</dd></div>
             {% endif %}
             {% if item.seller %}
-              <div><dt>Acquired from</dt><dd>{{ item.seller }}</dd></div>
-            {% endif %}
-            {% if item.location %}
-              <div><dt>Location</dt><dd>{{ item.location }}</dd></div>
+              <div><dt>Seller</dt><dd>{{ item.seller }}</dd></div>
             {% endif %}
             {% if item.price %}
               <div><dt>Price</dt><dd>{{ item.price }}</dd></div>
+            {% endif %}
+            {% if item.location %}
+              <div><dt>Location</dt><dd>{{ item.location }}</dd></div>
             {% endif %}
             <div>
               <dt>Added to collection</dt>

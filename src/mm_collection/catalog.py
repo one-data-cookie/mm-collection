@@ -18,15 +18,16 @@ register_heif_opener()
 ITEM_FIELDS = (
     "title",
     "author",
-    "date_created",
+    "made",
     "type",
     "origin",
-    "date_acquired",
+    "acquired",
     "seller",
-    "location",
     "price",
+    "location",
     "story",
 )
+ITEM_TYPES = ("Ceramics", "Glass", "Pictures", "Objects", "Textiles")
 MAX_PHOTO_BYTES = 30 * 1024 * 1024
 DISPLAY_MAXIMUM_SIZE = (1600, 1600)
 ORIGINAL_EXTENSIONS = {
@@ -165,9 +166,9 @@ async def create_item(
             item_id = connection.execute(
                 """
                 INSERT INTO items(
-                    title, author, date_created, type,
-                    origin, date_acquired, seller, location,
-                    price, story
+                    title, author, made, type,
+                    origin, acquired, seller, price,
+                    location, story
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 tuple(values.get(field) for field in ITEM_FIELDS),

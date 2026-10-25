@@ -82,9 +82,25 @@ def _add_location_and_origin(connection: sqlite3.Connection) -> None:
     connection.execute("ALTER TABLE items ADD COLUMN origin TEXT")
 
 
+def _rename_item_dates(connection: sqlite3.Connection) -> None:
+    connection.execute("ALTER TABLE items RENAME COLUMN date_created TO made")
+    connection.execute("ALTER TABLE items RENAME COLUMN date_acquired TO acquired")
+
+
+def _rename_acquired_on(connection: sqlite3.Connection) -> None:
+    connection.execute("ALTER TABLE items RENAME COLUMN acquired TO acquired_on")
+
+
+def _rename_acquired(connection: sqlite3.Connection) -> None:
+    connection.execute("ALTER TABLE items RENAME COLUMN acquired_on TO acquired")
+
+
 MIGRATIONS: tuple[Migration, ...] = (
     (1, "initial_schema", _initial_schema),
     (2, "add_location_and_origin", _add_location_and_origin),
+    (3, "rename_item_dates", _rename_item_dates),
+    (4, "rename_acquired_on", _rename_acquired_on),
+    (5, "rename_acquired", _rename_acquired),
 )
 
 
@@ -109,6 +125,7 @@ def apply_migrations(path: Path | None = None) -> None:
             row["version"]
             for row in connection.execute("SELECT version FROM schema_migrations")
         }
+        connection.execute("BEGIN")
         for version, name, migration in MIGRATIONS:
             if version in applied:
                 continue
@@ -138,8 +155,8 @@ def list_items(
                 items.title LIKE ? ESCAPE '\\'
                 OR COALESCE(items.author, '') LIKE ? ESCAPE '\\'
                 OR COALESCE(items.type, '') LIKE ? ESCAPE '\\'
-                OR COALESCE(items.date_created, '') LIKE ? ESCAPE '\\'
-                OR COALESCE(items.date_acquired, '') LIKE ? ESCAPE '\\'
+                OR COALESCE(items.made, '') LIKE ? ESCAPE '\\'
+                OR COALESCE(items.acquired, '') LIKE ? ESCAPE '\\'
                 OR COALESCE(items.seller, '') LIKE ? ESCAPE '\\'
                 OR COALESCE(items.location, '') LIKE ? ESCAPE '\\'
                 OR COALESCE(items.origin, '') LIKE ? ESCAPE '\\'
@@ -204,26 +221,26 @@ def update_item(
             UPDATE items SET
                 title = ?,
                 author = ?,
-                date_created = ?,
+                made = ?,
                 type = ?,
                 origin = ?,
-                date_acquired = ?,
+                acquired = ?,
                 seller = ?,
-                location = ?,
                 price = ?,
+                location = ?,
                 story = ?
             WHERE id = ?
             """,
             (
                 values.get("title"),
                 values.get("author"),
-                values.get("date_created"),
+                values.get("made"),
                 values.get("type"),
                 values.get("origin"),
-                values.get("date_acquired"),
+                values.get("acquired"),
                 values.get("seller"),
-                values.get("location"),
                 values.get("price"),
+                values.get("location"),
                 values.get("story"),
                 item_id,
             ),

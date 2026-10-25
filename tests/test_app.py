@@ -1,6 +1,7 @@
 import re
 from io import BytesIO
 
+import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
@@ -69,7 +70,9 @@ def test_collection_search_matches_metadata_and_preserves_the_query(tmp_path):
             data={
                 "title": "Blue vase",
                 "author": "Anna Nováková",
-                "type": "Ceramic",
+                "type": "Ceramics",
+                "made": "c. 1950",
+                "acquired": "2026-08-19",
                 "origin": "Bohemia",
                 "location": "Living room cabinet",
                 "story": "Found in Brno",
@@ -82,6 +85,8 @@ def test_collection_search_matches_metadata_and_preserves_the_query(tmp_path):
         response = client.get("/", params={"q": "ceramic"})
         location_response = client.get("/", params={"q": "living room"})
         origin_response = client.get("/", params={"q": "Bohemia"})
+        made_response = client.get("/", params={"q": "1950"})
+        acquired_response = client.get("/", params={"q": "2026-08-19"})
 
     assert response.status_code == 200
     assert "Blue vase" in response.text
@@ -90,6 +95,8 @@ def test_collection_search_matches_metadata_and_preserves_the_query(tmp_path):
     assert "1 object found" in response.text
     assert "Blue vase" in location_response.text
     assert "Blue vase" in origin_response.text
+    assert "Blue vase" in made_response.text
+    assert "Blue vase" in acquired_response.text
 
 
 def test_home_assistant_mode_rejects_direct_connections(tmp_path, monkeypatch):
@@ -250,7 +257,81 @@ def test_blank_title_is_rejected(tmp_path):
         assert connection.execute("SELECT count(*) FROM items").fetchone()[0] == 0
 
 
-def test_date_created_is_free_text_and_date_acquired_is_iso(tmp_path):
+def test_type_dropdown_has_only_the_allowed_categories(tmp_path):
+    app = create_app(tmp_path / "collection.sqlite")
+
+    with TestClient(app) as client:
+        response = client.get("/items/new")
+
+    dropdown = re.search(r'<select name="type"[^>]*>(.*?)</select>', response.text, re.DOTALL)
+    assert dropdown is not None
+    assert re.findall(r'<option value="([^"]*)"', dropdown.group(1)) == [
+        "", "Ceramics", "Glass", "Pictures", "Objects", "Textiles"
+    ]
+
+
+@pytest.mark.parametrize("item_type", ["Ceramics", "Glass", "Pictures", "Objects", "Textiles"])
+def test_allowed_type_can_be_created_and_edited(tmp_path, item_type):
+    database = tmp_path / "collection.sqlite"
+    app = create_app(database)
+
+    with TestClient(app) as client:
+        created = client.post(
+            "/items/new",
+            data={"title": "Typed object", "type": item_type},
+            follow_redirects=False,
+        )
+        edit_page = client.get("/items/1/edit")
+        with connect(database) as connection:
+            assert connection.execute("SELECT type FROM items").fetchone()[0] == item_type
+        client.post("/items/1/edit", data={"title": "Typed object", "type": ""})
+        with connect(database) as connection:
+            assert connection.execute("SELECT type FROM items").fetchone()[0] is None
+        edited = client.post(
+            "/items/1/edit",
+            data={"title": "Typed object", "type": item_type},
+            follow_redirects=False,
+        )
+        invalid_date = client.post(
+            "/items/1/edit",
+            data={"title": "Typed object", "type": item_type, "acquired": "bad-date"},
+        )
+
+    assert created.status_code == 303
+    assert edited.status_code == 303
+    selected_option = f'<option value="{item_type}" selected>'
+    assert selected_option in edit_page.text
+    assert invalid_date.status_code == 422
+    assert selected_option in invalid_date.text
+    with connect(database) as connection:
+        assert connection.execute("SELECT type FROM items").fetchone()[0] == item_type
+
+
+def test_unknown_type_is_rejected_on_create_and_edit(tmp_path):
+    database = tmp_path / "collection.sqlite"
+    app = create_app(database)
+
+    with TestClient(app) as client:
+        created = client.post(
+            "/items/new", data={"title": "Invalid", "type": "Furniture"}
+        )
+        with connect(database) as connection:
+            assert connection.execute("SELECT count(*) FROM items").fetchone()[0] == 0
+        client.post("/items/new", data={"title": "Original", "type": "Glass"})
+        edited = client.post(
+            "/items/1/edit", data={"title": "Changed", "type": "Furniture"}
+        )
+
+    assert created.status_code == 422
+    assert edited.status_code == 422
+    assert "Please select one of the available types." in created.text
+    assert "Please select one of the available types." in edited.text
+    with connect(database) as connection:
+        item = connection.execute("SELECT title, type FROM items").fetchone()
+    assert tuple(item) == ("Original", "Glass")
+
+
+def test_made_is_free_text_and_acquired_is_iso(tmp_path):
     database = tmp_path / "collection.sqlite"
     app = create_app(database)
 
@@ -259,38 +340,52 @@ def test_date_created_is_free_text_and_date_acquired_is_iso(tmp_path):
             "/items/new",
             data={
                 "title": "Dated object",
-                "date_created": "c. 1950–1960",
-                "date_acquired": "2026-08-19",
+                "made": "c. 1950–1960",
+                "acquired": "2026-08-19",
+                "price": "250 CZK",
+                "location": "Hall cabinet",
             },
             follow_redirects=False,
         )
+        detail_page = client.get("/items/1")
+        edit_page = client.get("/items/1/edit")
 
     assert response.status_code == 303
     with connect(database) as connection:
         item = connection.execute("SELECT * FROM items").fetchone()
-    assert item["date_created"] == "c. 1950–1960"
-    assert item["date_acquired"] == "2026-08-19"
+    assert item["made"] == "c. 1950–1960"
+    assert item["acquired"] == "2026-08-19"
+    assert item["price"] == "250 CZK"
+    assert item["location"] == "Hall cabinet"
+    assert "c. 1950–1960" in detail_page.text
+    assert "2026-08-19" in detail_page.text
+    assert "<dt>Made</dt>" in detail_page.text
+    assert "<dt>Acquired</dt>" in detail_page.text
+    assert 'value="c. 1950–1960"' in edit_page.text
+    assert 'value="2026-08-19"' in edit_page.text
 
 
-def test_date_acquired_has_picker_and_date_created_is_free_text(tmp_path):
+def test_acquired_has_picker_and_made_is_free_text(tmp_path):
     app = create_app(tmp_path / "collection.sqlite")
 
     with TestClient(app) as client:
         response = client.get("/items/new")
 
     assert response.status_code == 200
-    created_input = re.search(
-        r'<input[^>]*name="date_created"[^>]*>', response.text, re.DOTALL
+    assert "<span>Made</span>" in response.text
+    assert "<span>Acquired</span>" in response.text
+    made_input = re.search(
+        r'<input[^>]*name="made"[^>]*>', response.text, re.DOTALL
     )
     acquired_input = re.search(
-        r'<input[^>]*name="date_acquired"[^>]*>', response.text, re.DOTALL
+        r'<input[^>]*name="acquired"[^>]*>', response.text, re.DOTALL
     )
-    assert created_input is not None
+    assert made_input is not None
     assert acquired_input is not None
-    assert 'type="date"' not in created_input.group()
-    assert 'placeholder="e.g. c. 1950 or 1980s"' in created_input.group()
+    assert 'type="date"' not in made_input.group()
+    assert 'placeholder="e.g. c1950 or 1980s"' in made_input.group()
     assert 'type="date"' in acquired_input.group()
-    assert "Date acquired <strong>YYYY-MM-DD</strong>" not in response.text
+    assert "Acquired <strong>YYYY-MM-DD</strong>" not in response.text
 
 
 def test_invalid_date_is_rejected(tmp_path):
@@ -300,11 +395,11 @@ def test_invalid_date_is_rejected(tmp_path):
     with TestClient(app) as client:
         response = client.post(
             "/items/new",
-            data={"title": "Bad date", "date_acquired": "19/08/2026"},
+            data={"title": "Bad date", "acquired": "19/08/2026"},
         )
 
     assert response.status_code == 422
-    assert "Please enter Date acquired as YYYY-MM-DD" in response.text
+    assert "Please enter Acquired as YYYY-MM-DD" in response.text
     with connect(database) as connection:
         assert connection.execute("SELECT count(*) FROM items").fetchone()[0] == 0
 
@@ -338,7 +433,7 @@ def test_object_detail_shows_metadata_and_all_photos(tmp_path):
     assert "Unknown maker" in detail_page.text
     assert "Czechoslovakia" in detail_page.text
     assert "Hall cabinet" in detail_page.text
-    assert "Acquired from" in detail_page.text
+    assert "<dt>Seller</dt>" in detail_page.text
     assert "Old Town Antiques" in detail_page.text
     assert "Found together.\nKept together." in detail_page.text
     assert 'class="object-card__location"' in collection_page.text
@@ -383,10 +478,10 @@ def test_metadata_can_be_edited_without_changing_photos_or_date_added(tmp_path):
             data={
                 "title": "New title",
                 "author": "New author",
-                "date_created": "2020-05-06",
-                "type": "Figurine",
+                "made": "2020-05-06",
+                "type": "Objects",
                 "origin": "Prague",
-                "date_acquired": "2026-08-19",
+                "acquired": "2026-08-19",
                 "seller": "Market",
                 "location": "Office shelf",
                 "price": "250 CZK",
@@ -410,6 +505,9 @@ def test_metadata_can_be_edited_without_changing_photos_or_date_added(tmp_path):
     assert after["title"] == "New title"
     assert after["author"] == "New author"
     assert after["origin"] == "Prague"
+    assert after["made"] == "2020-05-06"
+    assert after["acquired"] == "2026-08-19"
+    assert after["price"] == "250 CZK"
     assert after["location"] == "Office shelf"
     assert after["date_added"] == before["date_added"]
     assert len(photos) == 1
@@ -425,11 +523,11 @@ def test_invalid_edit_leaves_the_existing_item_unchanged(tmp_path):
         client.post("/items/new", data={"title": "Original"})
         response = client.post(
             "/items/1/edit",
-            data={"title": "Changed", "date_acquired": "not-a-date"},
+            data={"title": "Changed", "acquired": "not-a-date"},
         )
 
     assert response.status_code == 422
-    assert "Please enter Date acquired as YYYY-MM-DD" in response.text
+    assert "Please enter Acquired as YYYY-MM-DD" in response.text
     with connect(database) as connection:
         item = connection.execute("SELECT * FROM items WHERE id = 1").fetchone()
     assert item["title"] == "Original"
@@ -452,10 +550,10 @@ def test_edit_form_keeps_empty_optional_fields_empty(tmp_path):
         item = connection.execute("SELECT * FROM items WHERE id = 1").fetchone()
     for field in (
         "author",
-        "date_created",
+        "made",
         "type",
         "origin",
-        "date_acquired",
+        "acquired",
         "seller",
         "location",
         "price",

@@ -17,6 +17,7 @@ from starlette.datastructures import UploadFile
 
 from .catalog import (
     ITEM_FIELDS,
+    ITEM_TYPES,
     PhotoError,
     add_photos,
     create_item,
@@ -34,7 +35,7 @@ from .database import (
 PACKAGE_DIRECTORY = Path(__file__).parent
 STATIC_DIRECTORY = PACKAGE_DIRECTORY / "static"
 templates = Jinja2Templates(directory=PACKAGE_DIRECTORY / "templates")
-ISO_DATE_FIELDS = ("date_acquired",)
+ISO_DATE_FIELDS = ("acquired",)
 INGRESS_PROXY_ADDRESSES = {"172.30.32.2", "127.0.0.1", "::1"}
 
 
@@ -47,13 +48,15 @@ def _normalize_dates(values: dict[str, str | None]) -> str | None:
         try:
             values[field] = date.fromisoformat(value).isoformat()
         except ValueError:
-            return "Please enter Date acquired as YYYY-MM-DD."
+            return "Please enter Acquired as YYYY-MM-DD."
     return None
 
 
 def _validation_error(values: dict[str, str | None]) -> str | None:
     if values["title"] is None:
         return "Please enter a title."
+    if values["type"] is not None and values["type"] not in ITEM_TYPES:
+        return "Please select one of the available types."
     return _normalize_dates(values)
 
 
@@ -67,6 +70,7 @@ def _path_for(request: Request, name: str, **path_params: object) -> str:
 
 
 templates.env.globals["path_for"] = _path_for
+templates.env.globals["item_types"] = ITEM_TYPES
 
 
 def _asset_version() -> str:

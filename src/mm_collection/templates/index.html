@@ -72,9 +72,9 @@
                 <div class="object-card__text">
                   <h2><a href="{{ path_for(request, 'item_detail', item_id=item.id) }}">{{ item.title }}</a></h2>
                   {% if item.author %}<p class="object-card__maker">{{ item.author }}</p>{% endif %}
-                  {% if item.type or item.date_created %}
+                  {% if item.type or item.made %}
                     <p class="metadata">
-                      {{ item.type or '' }}{% if item.type and item.date_created %}, {% endif %}{{ item.date_created or '' }}
+                      {{ item.type or '' }}{% if item.type and item.made %}, {% endif %}{{ item.made or '' }}
                     </p>
                   {% endif %}
                   {% if item.location %}

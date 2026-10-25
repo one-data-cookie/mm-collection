@@ -2,7 +2,8 @@ import sqlite3
 
 import pytest
 
-from mm_collection.database import _initial_schema, apply_migrations, connect
+from mm_collection import database
+from mm_collection.database import MIGRATIONS, _initial_schema, apply_migrations, connect
 
 
 def test_startup_creates_schema_and_is_repeatable(tmp_path):
@@ -27,6 +28,9 @@ def test_startup_creates_schema_and_is_repeatable(tmp_path):
     assert [tuple(row) for row in migrations] == [
         (1, "initial_schema"),
         (2, "add_location_and_origin"),
+        (3, "rename_item_dates"),
+        (4, "rename_acquired_on"),
+        (5, "rename_acquired"),
     ]
 
 
@@ -65,7 +69,96 @@ def test_location_migration_preserves_existing_items(tmp_path):
     assert [tuple(row) for row in migrations] == [
         (1, "initial_schema"),
         (2, "add_location_and_origin"),
+        (3, "rename_item_dates"),
+        (4, "rename_acquired_on"),
+        (5, "rename_acquired"),
     ]
+
+
+@pytest.mark.parametrize("schema_version", [2, 3, 4])
+def test_date_rename_preserves_existing_items_and_photos(tmp_path, schema_version):
+    path = tmp_path / "collection.sqlite"
+    made_column = "date_created" if schema_version == 2 else "made"
+    acquired_column = {
+        2: "date_acquired",
+        3: "acquired",
+        4: "acquired_on",
+    }[schema_version]
+
+    with connect(path) as connection:
+        connection.execute(
+            "CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, name TEXT)"
+        )
+        for version, name, migration in MIGRATIONS[:schema_version]:
+            migration(connection)
+            connection.execute(
+                "INSERT INTO schema_migrations(version, name) VALUES (?, ?)",
+                (version, name),
+            )
+        connection.execute(
+            f"""
+            INSERT INTO items(
+                title, author, {made_column}, type, origin, {acquired_column},
+                seller, price, location, story
+            ) VALUES (
+                'Vase', 'Maker', 'c. 1950', 'Ceramic', 'Prague', '2026-08-19',
+                'Market', '250 CZK', 'Hall cabinet', 'Found in Brno'
+            )
+            """
+        )
+        connection.execute("INSERT INTO items(title) VALUES ('Undated object')")
+        connection.execute(
+            """
+            INSERT INTO photos(item_id, original_path, display_path, is_primary)
+            VALUES (1, 'original.jpg', 'display.jpg', 1)
+            """
+        )
+        before_items = [
+            dict(row) for row in connection.execute("SELECT * FROM items ORDER BY id")
+        ]
+        before_photo = dict(connection.execute("SELECT * FROM photos").fetchone())
+
+    apply_migrations(path)
+    apply_migrations(path)
+
+    with connect(path) as connection:
+        after_items = [
+            dict(row) for row in connection.execute("SELECT * FROM items ORDER BY id")
+        ]
+        after_photo = dict(connection.execute("SELECT * FROM photos").fetchone())
+
+    for before, after in zip(before_items, after_items, strict=True):
+        before["made"] = before.pop(made_column)
+        before["acquired"] = before.pop(acquired_column)
+        assert after == before
+    assert after_photo == before_photo
+
+
+def test_failed_migration_rolls_back_schema_and_data(tmp_path, monkeypatch):
+    path = tmp_path / "collection.sqlite"
+    apply_migrations(path)
+    with connect(path) as connection:
+        connection.execute("INSERT INTO items(title, made) VALUES ('Vase', 'c. 1950')")
+
+    def failing_migration(connection):
+        connection.execute("ALTER TABLE items RENAME COLUMN made TO partial_rename")
+        connection.execute("UPDATE items SET partial_rename = 'Changed'")
+        raise RuntimeError("Migration failed")
+
+    monkeypatch.setattr(
+        database, "MIGRATIONS", MIGRATIONS + ((6, "failing_migration", failing_migration),)
+    )
+    with pytest.raises(RuntimeError, match="Migration failed"):
+        apply_migrations(path)
+
+    with connect(path) as connection:
+        item = connection.execute("SELECT * FROM items").fetchone()
+        versions = [
+            row[0] for row in connection.execute("SELECT version FROM schema_migrations")
+        ]
+    assert item["made"] == "c. 1950"
+    assert "partial_rename" not in item.keys()
+    assert versions == [1, 2, 3, 4, 5]
 
 
 def test_item_and_photo_constraints(tmp_path):

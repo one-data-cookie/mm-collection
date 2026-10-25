@@ -1,3 +1,14 @@
+document.querySelectorAll("[data-empty]").forEach((field) => {
+  const updateEmptyState = () => {
+    field.dataset.empty = String(field.value === "");
+  };
+
+  updateEmptyState();
+  field.addEventListener("input", updateEmptyState);
+  field.addEventListener("change", updateEmptyState);
+  window.addEventListener("pageshow", updateEmptyState);
+});
+
 document.querySelectorAll("time[data-local-date]").forEach((element) => {
   const timestamp = new Date(element.dateTime);
   if (Number.isNaN(timestamp.getTime())) return;

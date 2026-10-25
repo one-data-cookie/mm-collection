@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% if editing %}Edit {{ values.title }}{% else %}Add an object{% endif %} · M&amp;M Collection</title>
     <style>{{ inline_css | safe }}</style>
+    <script src="{{ path_for(request, 'static', path='/app.js') }}" defer></script>
   </head>
   <body class="admin-page">
     <header class="site-header">
@@ -36,20 +37,32 @@
 
         <div class="form-grid">
           <label>
-            <span>Author or maker</span>
-            <input name="author" value="{{ values.get('author') or '' }}">
-          </label>
-          <label>
-            <span>Object type</span>
-            <input name="type" value="{{ values.get('type') or '' }}">
-          </label>
-          <label>
-            <span>Date created</span>
+            <span>Author</span>
             <input
-              name="date_created"
-              value="{{ values.get('date_created') or '' }}"
-              placeholder="e.g. c. 1950 or 1980s"
+              name="author"
+              value="{{ values.get('author') or '' }}"
+              placeholder="e.g. Anna Nováková / Design Studio"
             >
+          </label>
+          <label>
+            <span>Made</span>
+            <input
+              name="made"
+              value="{{ values.get('made') or '' }}"
+              placeholder="e.g. c1950 or 1980s"
+            >
+          </label>
+          <label>
+            <span>Type</span>
+            <select name="type" data-empty="{{ 'false' if values.get('type') in item_types else 'true' }}">
+              <option value="">Select from the dropdown</option>
+              {% for item_type in item_types %}
+                <option value="{{ item_type }}"{% if values.get('type') == item_type %} selected{% endif %}>{{ item_type }}</option>
+              {% endfor %}
+            </select>
+            {% if values.get('type') and values.get('type') not in item_types %}
+              <small>Previous type: {{ values.get('type') }}. Saving will use the selection above.</small>
+            {% endif %}
           </label>
           <label>
             <span>Origin</span>
@@ -60,27 +73,32 @@
             >
           </label>
           <label>
-            <span>Date acquired</span>
+            <span>Acquired</span>
             <input
               type="date"
-              name="date_acquired"
-              value="{{ values.get('date_acquired') or '' }}"
+              name="acquired"
+              value="{{ values.get('acquired') or '' }}"
+              data-empty="{{ 'false' if values.get('acquired') else 'true' }}"
             >
           </label>
           <label>
-            <span>Acquired from</span>
+            <span>Seller</span>
             <input name="seller" value="{{ values.get('seller') or '' }}">
           </label>
           <label>
             <span>Price</span>
-            <input name="price" value="{{ values.get('price') or '' }}" inputmode="decimal">
+            <input
+              name="price"
+              value="{{ values.get('price') or '' }}"
+              placeholder="e.g. 100 CZK or 200 GBP"
+            >
           </label>
           <label>
             <span>Location</span>
             <input
               name="location"
               value="{{ values.get('location') or '' }}"
-              placeholder="e.g. Living room cabinet"
+              placeholder="e.g. Living room"
             >
           </label>
         </div>

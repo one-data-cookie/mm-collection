@@ -29,6 +29,7 @@ img {
 
 button,
 input,
+select,
 textarea {
   font: inherit;
 }
@@ -597,6 +598,7 @@ label strong {
 }
 
 .admin-page input,
+.admin-page select,
 .admin-page textarea {
   width: 100%;
   border: 1px solid #918b82;
@@ -607,9 +609,39 @@ label strong {
 }
 
 .admin-page input:focus,
+.admin-page select:focus,
 .admin-page textarea:focus {
   outline: 3px solid #8e233b;
   outline-offset: 1px;
+}
+
+.admin-page select {
+  appearance: none;
+  padding-right: 2.75rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2317191b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  background-size: 1rem;
+}
+
+.admin-page input::placeholder,
+.admin-page textarea::placeholder,
+.admin-page [data-empty="true"],
+.admin-page select option[value=""] {
+  color: #757575;
+  opacity: 1;
+}
+
+.admin-page select option {
+  color: #17191b;
+}
+
+.admin-page input[type="date"] {
+  color-scheme: light;
+}
+
+.admin-page input[type="date"]::-webkit-datetime-edit {
+  color: inherit;
 }
 
 small {
