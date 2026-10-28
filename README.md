@@ -8,8 +8,8 @@ photo is used as the object's primary image.
 
 JPEG, PNG, WebP, HEIF/HEIC, and AVIF uploads up to 30 MB each are supported.
 Existing objects and their metadata can be edited. Photos can be added,
-captioned, reordered, made primary, or removed. Object and photo deletion
-also removes the corresponding local files.
+captioned, reordered, made primary, downloaded as originals, or removed.
+Object and photo deletion also removes the corresponding local files.
 
 Objects can also record an optional origin and current location. Collection
 search covers titles, makers, types, dates, acquisition details, origin,

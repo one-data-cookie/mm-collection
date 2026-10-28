@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.13
+
+- Download any photo's original upload from the photo manager, named after the
+  object title and photo position.
+- Separate every byline field with a middle dot and say "photos" instead of
+  "photographs" throughout the app.
+
 ## 0.1.12
 
 - Keep Story for how an object was acquired and add Background for its history,
