@@ -703,6 +703,44 @@ def test_photos_can_be_added_to_an_existing_object(tmp_path):
     assert all(photo["display_path"] in manager_page.text for photo in photos)
 
 
+def test_original_photo_downloads_with_a_readable_name(tmp_path):
+    database = tmp_path / "collection.sqlite"
+    app = create_app(database)
+    first = image_bytes(color="red")
+    second = image_bytes(color="blue")
+
+    with TestClient(app) as client:
+        client.post(
+            "/items/new",
+            data={"title": "Váse Labyrint"},
+            files=[
+                ("photos", ("IMG_1.jpg", first, "image/jpeg")),
+                ("photos", ("IMG_2.jpg", second, "image/jpeg")),
+            ],
+        )
+        manager_page = client.get("/items/1/photos")
+        with connect(database) as connection:
+            photo_ids = [
+                row["id"]
+                for row in connection.execute(
+                    "SELECT id FROM photos ORDER BY position, id"
+                )
+            ]
+        download = client.get(f"/items/1/photos/{photo_ids[1]}/original")
+        missing = client.get("/items/1/photos/999/original")
+        wrong_item = client.get(f"/items/2/photos/{photo_ids[0]}/original")
+
+    assert f"/items/1/photos/{photo_ids[0]}/original" in manager_page.text
+    assert "Download" in manager_page.text
+    assert download.status_code == 200
+    assert download.content == second
+    assert download.headers["content-disposition"] == (
+        'attachment; filename="vase-labyrint-2.jpg"'
+    )
+    assert missing.status_code == 404
+    assert wrong_item.status_code == 404
+
+
 def test_bad_photo_addition_keeps_existing_photos_and_removes_new_files(tmp_path):
     database = tmp_path / "collection.sqlite"
     existing_contents = image_bytes(color="green")

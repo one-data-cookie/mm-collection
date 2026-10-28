@@ -65,6 +65,7 @@
                     value="delete"
                     onclick="return confirm('Remove this photo? This cannot be undone.')"
                   >Remove</button>
+                  <a class="quiet-link" href="{{ path_for(request, 'download_original', item_id=item.id, photo_id=photo.id) }}">Download</a>
                 </div>
               </form>
             </article>

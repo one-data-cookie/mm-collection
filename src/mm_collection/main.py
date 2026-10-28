@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import re
+import unicodedata
 from hashlib import sha256
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -10,7 +12,12 @@ from datetime import date
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
+from fastapi.responses import (
+    FileResponse,
+    HTMLResponse,
+    PlainTextResponse,
+    RedirectResponse,
+)
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.datastructures import UploadFile
@@ -50,6 +57,14 @@ def _normalize_dates(values: dict[str, str | None]) -> str | None:
         except ValueError:
             return "Please enter Acquired as YYYY-MM-DD."
     return None
+
+
+def _download_stem(title: str) -> str:
+    """Turn an object title into an ASCII filename stem."""
+    ascii_title = (
+        unicodedata.normalize("NFKD", title).encode("ascii", "ignore").decode()
+    )
+    return re.sub(r"[^a-z0-9]+", "-", ascii_title.lower()).strip("-") or "photo"
 
 
 def _validation_error(values: dict[str, str | None]) -> str | None:
@@ -313,6 +328,27 @@ def create_app(db_path: Path | None = None) -> FastAPI:
         return RedirectResponse(
             _path_for(request, "manage_photos", item_id=item_id), status_code=303
         )
+
+    @application.get(
+        "/items/{item_id}/photos/{photo_id}/original",
+        name="download_original",
+    )
+    async def download_original_route(item_id: int, photo_id: int) -> FileResponse:
+        item = get_item(item_id, target)
+        if item is None:
+            raise HTTPException(status_code=404, detail="Object not found")
+        for number, photo in enumerate(item["photos"], start=1):
+            if photo["id"] == photo_id:
+                original = photos / photo["original_path"]
+                if not original.is_file():
+                    break
+                return FileResponse(
+                    original,
+                    filename=(
+                        f"{_download_stem(item['title'])}-{number}{original.suffix}"
+                    ),
+                )
+        raise HTTPException(status_code=404, detail="Photo not found")
 
     @application.post(
         "/items/{item_id}/photos/{photo_id}",
