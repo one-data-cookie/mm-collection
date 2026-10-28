@@ -2,13 +2,13 @@
 
 A minimal local catalogue application built with FastAPI, Jinja2, and SQLite.
 
-Objects can be added with multiple photographs. The original uploaded files are
+Objects can be added with multiple photos. The original uploaded files are
 preserved, while smaller JPEG copies are generated for browsing. The first
-photograph is used as the object's primary image.
+photo is used as the object's primary image.
 
 JPEG, PNG, WebP, HEIF/HEIC, and AVIF uploads up to 30 MB each are supported.
-Existing objects and their metadata can be edited. Photographs can be added,
-captioned, reordered, made primary, or removed. Object and photograph deletion
+Existing objects and their metadata can be edited. Photos can be added,
+captioned, reordered, made primary, or removed. Object and photo deletion
 also removes the corresponding local files.
 
 Objects can also record an optional origin and current location. Collection
@@ -34,7 +34,7 @@ uvicorn mm_collection.main:app --reload
 
 Open <http://127.0.0.1:8000/>. On first startup the application creates
 `data/collection.sqlite` and applies all pending database migrations.
-Uploaded photographs are stored beneath `data/photos/<item-id>/`.
+Uploaded photos are stored beneath `data/photos/<item-id>/`.
 
 To keep runtime data elsewhere, set `MM_COLLECTION_DATA_DIR`:
 
@@ -50,7 +50,7 @@ pytest
 
 ## Docker
 
-The container stores the SQLite database and every original/display photograph
+The container stores the SQLite database and every original/display photo
 under `/data`. The Compose configuration maps that directory to the repository's
 ignored `data/` directory, so rebuilding the image does not remove the catalogue.
 
@@ -74,7 +74,7 @@ docker compose down
 ```
 
 Back up the complete `data/` directory to preserve the database and all original
-photographs.
+photos.
 
 ## Home Assistant OS
 
@@ -91,4 +91,4 @@ To install it in Home Assistant:
 The catalogue is available only through Home Assistant Ingress. Home Assistant
 handles authentication, and all catalogue data remains in the app's persistent
 `/data` directory. Select the app in Home Assistant backups to include the
-database and photographs.
+database and photos.

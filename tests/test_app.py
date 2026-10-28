@@ -473,11 +473,11 @@ def test_object_detail_shows_metadata_and_all_photos(tmp_path):
     [
         (
             "Harry Fenton / Royal Doulton", "Ceramics", "c1950s–1960s",
-            "Harry Fenton / Royal Doulton · Ceramics, c1950s–1960s",
+            "Harry Fenton / Royal Doulton · Ceramics · c1950s–1960s",
         ),
         ("Maker", "Ceramics", "", "Maker · Ceramics"),
         ("Maker", "", "c1950s–1960s", "Maker · c1950s–1960s"),
-        ("", "Ceramics", "c1950s–1960s", "Ceramics, c1950s–1960s"),
+        ("", "Ceramics", "c1950s–1960s", "Ceramics · c1950s–1960s"),
         ("Maker", "", "", "Maker"),
         ("", "Ceramics", "", "Ceramics"),
         ("", "", "c1950s–1960s", "c1950s–1960s"),

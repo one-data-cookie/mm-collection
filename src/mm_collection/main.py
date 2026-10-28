@@ -296,7 +296,7 @@ def create_app(db_path: Path | None = None) -> FastAPI:
             return templates.TemplateResponse(
                 request=request,
                 name="manage_photos.html",
-                context={"item": item, "error": "Please select a photograph."},
+                context={"item": item, "error": "Please select a photo."},
                 status_code=422,
             )
 
@@ -327,7 +327,7 @@ def create_app(db_path: Path | None = None) -> FastAPI:
         if action not in {"save", "primary", "earlier", "later", "delete"}:
             raise HTTPException(status_code=400, detail="Unknown photo action")
         if not manage_photo(target, photos, item_id, photo_id, caption, action):
-            raise HTTPException(status_code=404, detail="Photograph not found")
+            raise HTTPException(status_code=404, detail="Photo not found")
         return RedirectResponse(
             _path_for(request, "manage_photos", item_id=item_id), status_code=303
         )

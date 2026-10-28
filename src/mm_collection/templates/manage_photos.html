@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Manage photographs · {{ item.title }} · M&amp;M Collection</title>
+    <title>Manage photos · {{ item.title }} · M&amp;M Collection</title>
     <style>{{ inline_css | safe }}</style>
   </head>
   <body class="admin-page">
@@ -15,25 +15,25 @@
     <main class="page">
       <div class="page-heading">
         <p class="eyebrow">{{ item.title }}</p>
-        <h1>Manage photographs</h1>
-        <p>The first photograph is initially primary. You can change it or rearrange the display order here.</p>
+        <h1>Manage photos</h1>
+        <p>The first photo is initially primary. You can change it or rearrange the display order here.</p>
       </div>
 
       {% if error %}<p class="form-error" role="alert">{{ error }}</p>{% endif %}
 
       <section class="add-photos-panel" aria-labelledby="add-photos-heading">
-        <h2 id="add-photos-heading">Add photographs</h2>
+        <h2 id="add-photos-heading">Add photos</h2>
         <form method="post" enctype="multipart/form-data" class="add-photos-form">
           <label>
-            <span>Select photographs</span>
+            <span>Select photos</span>
             <input type="file" name="photos" accept="image/*" multiple required>
           </label>
-          <button class="button" type="submit">Upload photographs</button>
+          <button class="button" type="submit">Upload photos</button>
         </form>
       </section>
 
       {% if item.photos %}
-        <section class="photo-manager" aria-label="Existing photographs">
+        <section class="photo-manager" aria-label="Existing photos">
           {% for photo in item.photos %}
             <article class="photo-editor">
               <div class="photo-editor__preview">
@@ -63,7 +63,7 @@
                     type="submit"
                     name="action"
                     value="delete"
-                    onclick="return confirm('Remove this photograph? This cannot be undone.')"
+                    onclick="return confirm('Remove this photo? This cannot be undone.')"
                   >Remove</button>
                 </div>
               </form>
@@ -72,8 +72,8 @@
         </section>
       {% else %}
         <section class="empty-state photo-empty-state">
-          <h2>No photographs yet.</h2>
-          <p>Add one or several photographs using the form above.</p>
+          <h2>No photos yet.</h2>
+          <p>Add one or several photos using the form above.</p>
         </section>
       {% endif %}
     </main>
