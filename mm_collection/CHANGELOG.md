@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.14
+
+- Remove photo captions. An automatic migration drops the caption column, so
+  existing captions are deleted.
+- Keep the primary photo first: making a photo primary moves it to the front,
+  and the other photos reorder after it.
+- Group the Download and Remove links together in each photo's actions.
+- Replace the browser's file picker with one that matches the form, removing
+  Safari's file icon.
+- Remove redundant intro text from the home, add, edit, and photo pages.
+
 ## 0.1.13
 
 - Download any photo's original upload from the photo manager, named after the
