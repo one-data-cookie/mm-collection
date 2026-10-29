@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Manage photos · {{ item.title }} · M&amp;M Collection</title>
     <style>{{ inline_css | safe }}</style>
+    <script src="{{ path_for(request, 'static', path='/app.js') }}" defer></script>
   </head>
   <body class="admin-page">
     <header class="site-header">
@@ -26,7 +27,11 @@
         <form method="post" enctype="multipart/form-data" class="add-photos-form">
           <label>
             <span>Select photos</span>
-            <input type="file" name="photos" accept="image/*" multiple required>
+            <span class="file-picker">
+              <input type="file" name="photos" accept="image/*" multiple required data-file-picker>
+              <span class="file-picker__button" aria-hidden="true">Choose photos</span>
+              <span class="file-picker__names" aria-hidden="true" data-file-names>No photos selected</span>
+            </span>
           </label>
           <button class="button" type="submit">Upload photos</button>
         </form>

@@ -30,7 +30,11 @@
         {% if not editing %}
           <label>
             <span>Photos</span>
-            <input type="file" name="photos" accept="image/*" multiple>
+            <span class="file-picker">
+              <input type="file" name="photos" accept="image/*" multiple data-file-picker>
+              <span class="file-picker__button" aria-hidden="true">Choose photos</span>
+              <span class="file-picker__names" aria-hidden="true" data-file-names>No photos selected</span>
+            </span>
             <small>Select or take several photos at once.</small>
           </label>
         {% endif %}
