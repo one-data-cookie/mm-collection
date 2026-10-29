@@ -808,11 +808,105 @@ def test_photo_caption_primary_and_order_can_be_managed(tmp_path):
         ordered = connection.execute(
             "SELECT * FROM photos ORDER BY position"
         ).fetchall()
-    assert [row["id"] for row in ordered] == [first_id, third_id, second_id]
+    assert [row["id"] for row in ordered] == [third_id, first_id, second_id]
     assert [row["position"] for row in ordered] == [0, 1, 2]
     assert [row["id"] for row in ordered if row["is_primary"]] == [third_id]
     assert next(row for row in ordered if row["id"] == third_id)["caption"] == "Blue side"
     assert "Blue side" in detail_page.text
+
+
+def test_primary_photo_stays_first_when_moving_photos(tmp_path):
+    database = tmp_path / "collection.sqlite"
+    app = create_app(database)
+
+    with TestClient(app) as client:
+        client.post(
+            "/items/new",
+            data={"title": "Pinned view"},
+            files=[
+                ("photos", ("one.jpg", image_bytes(color="red"), "image/jpeg")),
+                ("photos", ("two.jpg", image_bytes(color="green"), "image/jpeg")),
+                ("photos", ("three.jpg", image_bytes(color="blue"), "image/jpeg")),
+            ],
+        )
+        with connect(database) as connection:
+            initial = connection.execute(
+                "SELECT * FROM photos ORDER BY position"
+            ).fetchall()
+        first_id, second_id, third_id = [row["id"] for row in initial]
+
+        primary_later = client.post(
+            f"/items/1/photos/{first_id}",
+            data={"action": "later"},
+            follow_redirects=False,
+        )
+        second_earlier = client.post(
+            f"/items/1/photos/{second_id}",
+            data={"action": "earlier"},
+            follow_redirects=False,
+        )
+        third_earlier = client.post(
+            f"/items/1/photos/{third_id}",
+            data={"action": "earlier"},
+            follow_redirects=False,
+        )
+        manager_page = client.get("/items/1/photos")
+
+    assert primary_later.status_code == 303
+    assert second_earlier.status_code == 303
+    assert third_earlier.status_code == 303
+    with connect(database) as connection:
+        ordered = connection.execute(
+            "SELECT * FROM photos ORDER BY position"
+        ).fetchall()
+    assert [row["id"] for row in ordered] == [first_id, third_id, second_id]
+    assert [row["is_primary"] for row in ordered] == [1, 0, 0]
+
+    move_buttons = re.findall(
+        r'<button type="submit" name="action" value="(earlier|later)"\s*(disabled)?>',
+        manager_page.text,
+    )
+    assert move_buttons == [
+        ("earlier", "disabled"),
+        ("later", "disabled"),
+        ("earlier", "disabled"),
+        ("later", ""),
+        ("earlier", ""),
+        ("later", "disabled"),
+    ]
+
+
+def test_primary_photo_is_listed_first_even_when_stored_later(tmp_path):
+    database = tmp_path / "collection.sqlite"
+    app = create_app(database)
+
+    with TestClient(app) as client:
+        client.post(
+            "/items/new",
+            data={"title": "Legacy order"},
+            files=[
+                ("photos", ("one.jpg", image_bytes(color="red"), "image/jpeg")),
+                ("photos", ("two.jpg", image_bytes(color="green"), "image/jpeg")),
+            ],
+        )
+        with connect(database) as connection:
+            first_id, second_id = [
+                row["id"]
+                for row in connection.execute(
+                    "SELECT id FROM photos ORDER BY position"
+                ).fetchall()
+            ]
+            connection.execute(
+                "UPDATE photos SET position = 1 WHERE id = ?", (first_id,)
+            )
+            connection.execute(
+                "UPDATE photos SET position = 0 WHERE id = ?", (second_id,)
+            )
+        manager_page = client.get("/items/1/photos")
+
+    first_form = f"/items/1/photos/{first_id}\""
+    second_form = f"/items/1/photos/{second_id}\""
+    assert manager_page.text.index(first_form) < manager_page.text.index(second_form)
 
 
 def test_removing_primary_photo_reassigns_primary_and_cleans_files(tmp_path):

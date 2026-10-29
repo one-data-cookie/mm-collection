@@ -285,19 +285,31 @@ def manage_photo(
             connection.execute(
                 "UPDATE photos SET is_primary = 1 WHERE id = ?", (photo_id,)
             )
+            ordered = connection.execute(
+                """
+                SELECT id FROM photos
+                WHERE item_id = ? ORDER BY id != ?, position, id
+                """,
+                (item_id, photo_id),
+            ).fetchall()
+            for position, row in enumerate(ordered):
+                connection.execute(
+                    "UPDATE photos SET position = ? WHERE id = ?",
+                    (position, row["id"]),
+                )
         elif action in {"earlier", "later"}:
+            # The primary photo is pinned first, so only the others reorder.
             ordered = connection.execute(
                 """
                 SELECT id, position FROM photos
-                WHERE item_id = ? ORDER BY position, id
+                WHERE item_id = ? AND is_primary = 0 ORDER BY position, id
                 """,
                 (item_id,),
             ).fetchall()
-            current_index = next(
-                index for index, row in enumerate(ordered) if row["id"] == photo_id
-            )
+            ids = [row["id"] for row in ordered]
+            current_index = ids.index(photo_id) if photo_id in ids else -1
             neighbor_index = current_index + (-1 if action == "earlier" else 1)
-            if 0 <= neighbor_index < len(ordered):
+            if current_index >= 0 and 0 <= neighbor_index < len(ordered):
                 current = ordered[current_index]
                 neighbor = ordered[neighbor_index]
                 connection.execute(
