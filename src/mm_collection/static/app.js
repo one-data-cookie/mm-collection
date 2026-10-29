@@ -9,6 +9,26 @@ document.querySelectorAll("[data-empty]").forEach((field) => {
   window.addEventListener("pageshow", updateEmptyState);
 });
 
+document.querySelectorAll("[data-file-picker]").forEach((input) => {
+  const names = input.parentElement.querySelector("[data-file-names]");
+  if (!names) return;
+
+  const updateNames = () => {
+    const files = Array.from(input.files);
+    if (files.length === 0) {
+      names.textContent = "No photos selected";
+    } else if (files.length === 1) {
+      names.textContent = files[0].name;
+    } else {
+      names.textContent = `${files.length} photos selected`;
+    }
+  };
+
+  updateNames();
+  input.addEventListener("change", updateNames);
+  window.addEventListener("pageshow", updateNames);
+});
+
 document.querySelectorAll("time[data-local-date]").forEach((element) => {
   const timestamp = new Date(element.dateTime);
   if (Number.isNaN(timestamp.getTime())) return;
