@@ -33,6 +33,7 @@ def test_startup_creates_schema_and_is_repeatable(tmp_path):
         (5, "rename_acquired"),
         (6, "rename_added"),
         (7, "add_background"),
+        (8, "drop_photo_captions"),
     ]
 
 
@@ -76,6 +77,7 @@ def test_location_migration_preserves_existing_items(tmp_path):
         (5, "rename_acquired"),
         (6, "rename_added"),
         (7, "add_background"),
+        (8, "drop_photo_captions"),
     ]
 
 
@@ -138,6 +140,7 @@ def test_date_rename_preserves_existing_items_and_photos(tmp_path, schema_versio
         before["added"] = before.pop("date_added")
         before["background"] = None
         assert after == before
+    before_photo.pop("caption")
     assert after_photo == before_photo
 
 
@@ -174,8 +177,42 @@ def test_background_migration_preserves_existing_story_and_photos(tmp_path, stor
         photo = dict(connection.execute("SELECT * FROM photos").fetchone())
 
     before_item["background"] = None
+    before_photo.pop("caption")
     assert item == before_item
     assert photo == before_photo
+
+
+def test_caption_migration_preserves_other_photo_fields(tmp_path):
+    path = tmp_path / "collection.sqlite"
+    with connect(path) as connection:
+        connection.execute(
+            "CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, name TEXT)"
+        )
+        for version, name, migration in MIGRATIONS[:7]:
+            migration(connection)
+            connection.execute(
+                "INSERT INTO schema_migrations(version, name) VALUES (?, ?)",
+                (version, name),
+            )
+        connection.execute("INSERT INTO items(title) VALUES ('Existing object')")
+        connection.execute(
+            """
+            INSERT INTO photos(
+                item_id, original_path, display_path, position, is_primary, caption
+            )
+            VALUES (1, 'original.jpg', 'display.jpg', 2, 1, 'Front view')
+            """
+        )
+        before = dict(connection.execute("SELECT * FROM photos").fetchone())
+
+    apply_migrations(path)
+    apply_migrations(path)
+
+    with connect(path) as connection:
+        after = dict(connection.execute("SELECT * FROM photos").fetchone())
+
+    before.pop("caption")
+    assert after == before
 
 
 def test_failed_migration_rolls_back_schema_and_data(tmp_path, monkeypatch):
@@ -190,7 +227,7 @@ def test_failed_migration_rolls_back_schema_and_data(tmp_path, monkeypatch):
         raise RuntimeError("Migration failed")
 
     monkeypatch.setattr(
-        database, "MIGRATIONS", MIGRATIONS + ((8, "failing_migration", failing_migration),)
+        database, "MIGRATIONS", MIGRATIONS + ((9, "failing_migration", failing_migration),)
     )
     with pytest.raises(RuntimeError, match="Migration failed"):
         apply_migrations(path)
@@ -202,7 +239,7 @@ def test_failed_migration_rolls_back_schema_and_data(tmp_path, monkeypatch):
         ]
     assert item["made"] == "c. 1950"
     assert "partial_rename" not in item.keys()
-    assert versions == [1, 2, 3, 4, 5, 6, 7]
+    assert versions == [1, 2, 3, 4, 5, 6, 7, 8]
 
 
 def test_item_and_photo_constraints(tmp_path):

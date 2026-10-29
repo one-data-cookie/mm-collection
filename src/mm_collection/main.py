@@ -358,11 +358,10 @@ def create_app(db_path: Path | None = None) -> FastAPI:
         request: Request, item_id: int, photo_id: int
     ) -> RedirectResponse:
         form = await request.form()
-        action = str(form.get("action", "save"))
-        caption = str(form.get("caption", "")).strip() or None
-        if action not in {"save", "primary", "earlier", "later", "delete"}:
+        action = str(form.get("action", ""))
+        if action not in {"primary", "earlier", "later", "delete"}:
             raise HTTPException(status_code=400, detail="Unknown photo action")
-        if not manage_photo(target, photos, item_id, photo_id, caption, action):
+        if not manage_photo(target, photos, item_id, photo_id, action):
             raise HTTPException(status_code=404, detail="Photo not found")
         return RedirectResponse(
             _path_for(request, "manage_photos", item_id=item_id), status_code=303

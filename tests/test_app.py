@@ -770,7 +770,7 @@ def test_bad_photo_addition_keeps_existing_photos_and_removes_new_files(tmp_path
     assert len(list((tmp_path / "photos" / "1" / "display").iterdir())) == 1
 
 
-def test_photo_caption_primary_and_order_can_be_managed(tmp_path):
+def test_photo_primary_and_order_can_be_managed(tmp_path):
     database = tmp_path / "collection.sqlite"
     app = create_app(database)
 
@@ -792,15 +792,14 @@ def test_photo_caption_primary_and_order_can_be_managed(tmp_path):
 
         move_response = client.post(
             f"/items/1/photos/{third_id}",
-            data={"caption": "Blue side", "action": "earlier"},
+            data={"action": "earlier"},
             follow_redirects=False,
         )
         primary_response = client.post(
             f"/items/1/photos/{third_id}",
-            data={"caption": "Blue side", "action": "primary"},
+            data={"action": "primary"},
             follow_redirects=False,
         )
-        detail_page = client.get("/items/1")
 
     assert move_response.status_code == 303
     assert primary_response.status_code == 303
@@ -811,8 +810,6 @@ def test_photo_caption_primary_and_order_can_be_managed(tmp_path):
     assert [row["id"] for row in ordered] == [third_id, first_id, second_id]
     assert [row["position"] for row in ordered] == [0, 1, 2]
     assert [row["id"] for row in ordered if row["is_primary"]] == [third_id]
-    assert next(row for row in ordered if row["id"] == third_id)["caption"] == "Blue side"
-    assert "Blue side" in detail_page.text
 
 
 def test_primary_photo_stays_first_when_moving_photos(tmp_path):

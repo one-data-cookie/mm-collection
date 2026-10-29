@@ -256,10 +256,9 @@ def manage_photo(
     photo_directory: Path,
     item_id: int,
     photo_id: int,
-    caption: str | None,
     action: str,
 ) -> bool:
-    """Update, move, make primary, or remove one item photograph."""
+    """Move, make primary, or remove one item photograph."""
     deleted_paths: list[Path] = []
 
     with connect(database) as connection:
@@ -270,15 +269,7 @@ def manage_photo(
         if photo is None:
             return False
 
-        if action != "delete":
-            connection.execute(
-                "UPDATE photos SET caption = ? WHERE id = ?",
-                (caption, photo_id),
-            )
-
-        if action == "save":
-            pass
-        elif action == "primary":
+        if action == "primary":
             connection.execute(
                 "UPDATE photos SET is_primary = 0 WHERE item_id = ?", (item_id,)
             )

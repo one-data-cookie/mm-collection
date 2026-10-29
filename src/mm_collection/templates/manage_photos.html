@@ -39,20 +39,14 @@
               <div class="photo-editor__preview">
                 <img
                   src="{{ path_for(request, 'media', path='/' ~ photo.display_path) }}"
-                  alt="{{ photo.caption or item.title }}"
+                  alt="{{ item.title }}"
                   loading="lazy"
                 >
                 {% if photo.is_primary %}<span class="primary-badge">Primary</span>{% endif %}
               </div>
 
               <form method="post" action="{{ path_for(request, 'update_photo', item_id=item.id, photo_id=photo.id) }}">
-                <label>
-                  <span>Caption</span>
-                  <textarea name="caption" rows="2">{{ photo.caption or '' }}</textarea>
-                </label>
-
                 <div class="photo-actions">
-                  <button type="submit" name="action" value="save">Save caption</button>
                   {% if not photo.is_primary %}
                     <button type="submit" name="action" value="primary">Make primary</button>
                   {% endif %}

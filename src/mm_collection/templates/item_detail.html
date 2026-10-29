@@ -22,7 +22,7 @@
                 <img
                   class="object-hero"
                   src="{{ path_for(request, 'media', path='/' ~ item.primary_photo.display_path) }}"
-                  alt="{{ item.primary_photo.caption or item.title }}"
+                  alt="{{ item.title }}"
                   data-gallery-image
                 >
               </div>
@@ -32,11 +32,11 @@
                   <button
                     class="photo-thumbnail{% if photo.id == item.primary_photo.id %} is-selected{% endif %}"
                     type="button"
-                    aria-label="View photo {{ loop.index }} of {{ item.photos | length }}{% if photo.caption %}: {{ photo.caption }}{% endif %}"
+                    aria-label="View photo {{ loop.index }} of {{ item.photos | length }}"
                     aria-current="{% if photo.id == item.primary_photo.id %}true{% else %}false{% endif %}"
                     data-gallery-thumbnail
                     data-gallery-src="{{ path_for(request, 'media', path='/' ~ photo.display_path) }}"
-                    data-gallery-alt="{{ photo.caption or item.title }}"
+                    data-gallery-alt="{{ item.title }}"
                   >
                     <img
                       src="{{ path_for(request, 'media', path='/' ~ photo.display_path) }}"

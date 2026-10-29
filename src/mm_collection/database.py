@@ -103,6 +103,10 @@ def _add_background(connection: sqlite3.Connection) -> None:
     connection.execute("ALTER TABLE items ADD COLUMN background TEXT")
 
 
+def _drop_photo_captions(connection: sqlite3.Connection) -> None:
+    connection.execute("ALTER TABLE photos DROP COLUMN caption")
+
+
 MIGRATIONS: tuple[Migration, ...] = (
     (1, "initial_schema", _initial_schema),
     (2, "add_location_and_origin", _add_location_and_origin),
@@ -111,6 +115,7 @@ MIGRATIONS: tuple[Migration, ...] = (
     (5, "rename_acquired", _rename_acquired),
     (6, "rename_added", _rename_added),
     (7, "add_background", _add_background),
+    (8, "drop_photo_captions", _drop_photo_captions),
 )
 
 
