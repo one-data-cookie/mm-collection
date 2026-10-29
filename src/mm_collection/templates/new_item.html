@@ -16,7 +16,6 @@
       <div class="page-heading">
         <p class="eyebrow">{% if editing %}Collection object{% else %}New acquisition{% endif %}</p>
         <h1>{% if editing %}Edit object{% else %}Add an object{% endif %}</h1>
-        <p>{% if editing %}Update the catalogue information for this object.{% else %}Start with the essentials. Everything except the title is optional.{% endif %}</p>
       </div>
 
       {% if error %}<p class="form-error" role="alert">{{ error }}</p>{% endif %}
