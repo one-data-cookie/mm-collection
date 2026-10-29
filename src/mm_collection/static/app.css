@@ -746,7 +746,15 @@ small {
 .photo-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.65rem 0.9rem;
+}
+
+.photo-actions__links {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+  white-space: nowrap;
 }
 
 .photo-actions button:not(.danger-link) {

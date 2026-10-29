@@ -58,14 +58,16 @@
                   {% endif %}
                   <button type="submit" name="action" value="earlier" {% if loop.first %}disabled{% endif %}>Move earlier</button>
                   <button type="submit" name="action" value="later" {% if loop.last %}disabled{% endif %}>Move later</button>
-                  <button
-                    class="danger-link"
-                    type="submit"
-                    name="action"
-                    value="delete"
-                    onclick="return confirm('Remove this photo? This cannot be undone.')"
-                  >Remove</button>
-                  <a class="quiet-link" href="{{ path_for(request, 'download_original', item_id=item.id, photo_id=photo.id) }}">Download</a>
+                  <span class="photo-actions__links">
+                    <a class="quiet-link" href="{{ path_for(request, 'download_original', item_id=item.id, photo_id=photo.id) }}">Download</a>
+                    <button
+                      class="danger-link"
+                      type="submit"
+                      name="action"
+                      value="delete"
+                      onclick="return confirm('Remove this photo? This cannot be undone.')"
+                    >Remove</button>
+                  </span>
                 </div>
               </form>
             </article>
