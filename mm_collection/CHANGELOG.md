@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.15
+
+- Filter the collection by type, location, and year acquired, alone or combined
+  with search. Filters collapse behind a toggle and open when one is active.
+- Compact the collection page header and centre it, so objects show sooner.
+- Show Background and Story after the object details.
+- Keep the Made value together on one line in object bylines.
+
 ## 0.1.14
 
 - Remove photo captions. An automatic migration drops the caption column, so
