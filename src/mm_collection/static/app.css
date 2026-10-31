@@ -496,6 +496,10 @@ p {
   line-height: 1.5;
 }
 
+.object-byline-made {
+  display: inline-block;
+}
+
 .object-story {
   margin: 1.8rem 0;
   color: #e0ddd7;

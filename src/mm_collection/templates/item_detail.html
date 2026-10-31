@@ -59,7 +59,7 @@
           <h1>{{ item.title }}</h1>
 
           {% if item.author or item.type or item.made %}
-            <p class="object-byline">{% for part in [item.author, item.type, item.made] | select %}{% if not loop.first %}<span aria-hidden="true"> · </span>{% endif %}{{ part }}{% endfor %}</p>
+            <p class="object-byline">{% for part in [item.author, item.type, item.made] | select %}{% if not loop.first %}<span aria-hidden="true"> · </span>{% endif %}{% if loop.last and item.made %}<span class="object-byline-made">{{ part }}</span>{% else %}{{ part }}{% endif %}{% endfor %}</p>
           {% endif %}
 
           {% if item.background %}

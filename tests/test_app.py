@@ -504,6 +504,10 @@ def test_object_byline_spacing_with_optional_fields(
         assert byline is not None
         text = re.sub(r"<[^>]+>", "", byline.group(1))
         assert text == expected
+        if made:
+            assert f'<span class="object-byline-made">{made}</span>' in byline.group(1)
+        else:
+            assert "object-byline-made" not in byline.group(1)
 
 
 def test_metadata_can_be_edited_without_changing_photos_or_added(tmp_path):
