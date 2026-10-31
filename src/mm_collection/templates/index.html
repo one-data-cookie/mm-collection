@@ -16,11 +16,9 @@
       <section class="collection-intro">
         <h1>Explore the collection</h1>
         <p>Objects, stories and memories gathered together.</p>
-      </section>
 
-      <section class="search-section" aria-labelledby="search-heading">
-        <div class="search-section__inner">
-          <h2 id="search-heading">Search the collection</h2>
+        <section class="search-section" aria-labelledby="search-heading">
+          <h2 id="search-heading" class="visually-hidden">Search the collection</h2>
           <form class="collection-search" method="get" action="{{ path_for(request, 'index') }}" role="search">
             <label class="visually-hidden" for="collection-query">Search by object, maker or story</label>
             <input
@@ -41,29 +39,34 @@
               </svg>
             </button>
           </form>
-          {% if filter_groups %}
-            <div class="collection-filters">
-              {% for group in filter_groups %}
-                <div class="collection-filters__group" role="group" aria-label="Filter by {{ group.label }}">
-                  <span class="collection-filters__label" aria-hidden="true">{{ group.label }}</span>
-                  <div class="collection-filters__chips">
-                    {% for chip in group.chips %}
-                      <a class="filter-chip" href="{{ chip.href }}"{% if chip.active %} aria-current="true"{% endif %}>{{ chip.value }}</a>
-                    {% endfor %}
-                  </div>
+          <div class="collection-controls">
+            {% if query or has_filters %}
+              <p class="search-summary">
+                {{ items|length }} object{% if items|length != 1 %}s{% endif %} found{% if query %} for “{{ query }}”{% endif %}
+                <a href="{{ path_for(request, 'index') }}">{% if has_filters %}Clear all{% else %}Clear search{% endif %}</a>
+              </p>
+            {% else %}
+              <p class="search-summary">Browse {{ items|length }} object{% if items|length != 1 %}s{% endif %} in the collection</p>
+            {% endif %}
+            {% if filter_groups %}
+              <details class="collection-filters"{% if has_filters %} open{% endif %}>
+                <summary>Filters</summary>
+                <div class="collection-filters__groups">
+                  {% for group in filter_groups %}
+                    <div class="collection-filters__group" role="group" aria-label="Filter by {{ group.label }}">
+                      <span class="collection-filters__label" aria-hidden="true">{{ group.label }}</span>
+                      <div class="collection-filters__chips">
+                        {% for chip in group.chips %}
+                          <a class="filter-chip" href="{{ chip.href }}"{% if chip.active %} aria-current="true"{% endif %}>{{ chip.value }}</a>
+                        {% endfor %}
+                      </div>
+                    </div>
+                  {% endfor %}
                 </div>
-              {% endfor %}
-            </div>
-          {% endif %}
-          {% if query or has_filters %}
-            <p class="search-summary">
-              {{ items|length }} object{% if items|length != 1 %}s{% endif %} found{% if query %} for “{{ query }}”{% endif %}
-              <a href="{{ path_for(request, 'index') }}">{% if has_filters %}Clear all{% else %}Clear search{% endif %}</a>
-            </p>
-          {% else %}
-            <p class="search-summary">Browse {{ items|length }} object{% if items|length != 1 %}s{% endif %} in the collection</p>
-          {% endif %}
-        </div>
+              </details>
+            {% endif %}
+          </div>
+        </section>
       </section>
 
       <section class="collection-results" aria-label="Collection objects">

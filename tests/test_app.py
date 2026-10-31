@@ -174,6 +174,24 @@ def test_clearing_the_only_active_filter_links_to_the_plain_index(tmp_path):
     assert ">Clear all</a>" in page.text
 
 
+def test_filters_collapse_unless_one_is_active(tmp_path):
+    collapsed = '<details class="collection-filters">'
+    expanded = '<details class="collection-filters" open>'
+    app = create_app(tmp_path / "collection.sqlite")
+    with TestClient(app) as client:
+        assert "<details" not in client.get("/").text
+        _seed_filterable_items(client)
+        plain = client.get("/")
+        searched = client.get("/", params={"q": "jug"})
+        filtered = client.get("/", params={"type": "Glass"})
+        combined = client.get("/", params={"q": "vase", "type": "Glass"})
+
+    assert collapsed in plain.text
+    assert collapsed in searched.text
+    assert expanded in filtered.text
+    assert expanded in combined.text
+
+
 def test_search_form_keeps_active_filters(tmp_path):
     app = create_app(tmp_path / "collection.sqlite")
     with TestClient(app) as client:
