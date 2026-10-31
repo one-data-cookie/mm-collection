@@ -447,6 +447,12 @@ def test_object_detail_shows_metadata_and_all_photos(tmp_path):
     assert "A studio piece.\nMade by hand." in detail_page.text
     assert "<h2>Story</h2>" in detail_page.text
     assert "<h2>Background</h2>" in detail_page.text
+    assert (
+        detail_page.text.index('class="object-metadata"')
+        < detail_page.text.index("<h2>Background</h2>")
+        < detail_page.text.index("<h2>Story</h2>")
+        < detail_page.text.index('class="record-actions"')
+    )
     assert 'class="object-card__location"' in collection_page.text
     assert "Hall cabinet" in collection_page.text
     assert detail_page.text.index("Edit object") < detail_page.text.index("Delete object")

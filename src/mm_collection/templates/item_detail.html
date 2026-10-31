@@ -62,19 +62,6 @@
             <p class="object-byline">{% for part in [item.author, item.type, item.made] | select %}{% if not loop.first %}<span aria-hidden="true"> · </span>{% endif %}{% if loop.last and item.made %}<span class="object-byline-made">{{ part }}</span>{% else %}{{ part }}{% endif %}{% endfor %}</p>
           {% endif %}
 
-          {% if item.background %}
-            <section class="object-story">
-              <h2>Background</h2>
-              <p>{{ item.background }}</p>
-            </section>
-          {% endif %}
-          {% if item.story %}
-            <section class="object-story">
-              <h2>Story</h2>
-              <p>{{ item.story }}</p>
-            </section>
-          {% endif %}
-
           <dl class="object-metadata">
             {% if item.author %}
               <div><dt>Author</dt><dd>{{ item.author }}</dd></div>
@@ -105,6 +92,19 @@
               <dd><time datetime="{{ item.added }}" data-local-date>{{ item.added[:10] }}</time></dd>
             </div>
           </dl>
+
+          {% if item.background %}
+            <section class="object-story">
+              <h2>Background</h2>
+              <p>{{ item.background }}</p>
+            </section>
+          {% endif %}
+          {% if item.story %}
+            <section class="object-story">
+              <h2>Story</h2>
+              <p>{{ item.story }}</p>
+            </section>
+          {% endif %}
 
           <div class="record-actions">
             <a class="button" href="{{ path_for(request, 'edit_item', item_id=item.id) }}">Edit object</a>
