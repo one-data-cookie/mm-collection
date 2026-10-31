@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>M&amp;M Collection{% if query %} · Search{% endif %}</title>
+    <title>M&amp;M Collection{% if query or has_filters %} · Search{% endif %}</title>
     <style>{{ inline_css | safe }}</style>
   </head>
   <body class="collection-page">
@@ -31,6 +31,9 @@
               placeholder="Search by object, maker or story…"
               autocomplete="off"
             >
+            {% for name, value in filters.items() if value %}
+              <input type="hidden" name="{{ name }}" value="{{ value }}">
+            {% endfor %}
             <button type="submit" aria-label="Search">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <circle cx="10.8" cy="10.8" r="6.8"></circle>
@@ -38,10 +41,24 @@
               </svg>
             </button>
           </form>
-          {% if query %}
+          {% if filter_groups %}
+            <div class="collection-filters">
+              {% for group in filter_groups %}
+                <div class="collection-filters__group" role="group" aria-label="Filter by {{ group.label }}">
+                  <span class="collection-filters__label" aria-hidden="true">{{ group.label }}</span>
+                  <div class="collection-filters__chips">
+                    {% for chip in group.chips %}
+                      <a class="filter-chip" href="{{ chip.href }}"{% if chip.active %} aria-current="true"{% endif %}>{{ chip.value }}</a>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+          {% if query or has_filters %}
             <p class="search-summary">
-              {{ items|length }} object{% if items|length != 1 %}s{% endif %} found for “{{ query }}”
-              <a href="{{ path_for(request, 'index') }}">Clear search</a>
+              {{ items|length }} object{% if items|length != 1 %}s{% endif %} found{% if query %} for “{{ query }}”{% endif %}
+              <a href="{{ path_for(request, 'index') }}">{% if has_filters %}Clear all{% else %}Clear search{% endif %}</a>
             </p>
           {% else %}
             <p class="search-summary">Browse {{ items|length }} object{% if items|length != 1 %}s{% endif %} in the collection</p>
@@ -89,11 +106,16 @@
               </article>
             {% endfor %}
           </div>
-        {% elif query %}
+        {% elif query or has_filters %}
           <section class="empty-state">
             <p class="eyebrow">No results</p>
-            <h2>Nothing matched “{{ query }}”.</h2>
-            <p>Try a title, maker, object type or a word from its story.</p>
+            {% if query %}
+              <h2>Nothing matched “{{ query }}”.</h2>
+              <p>Try a title, maker, object type or a word from its story.</p>
+            {% else %}
+              <h2>Nothing matched these filters.</h2>
+              <p>Try removing one of them.</p>
+            {% endif %}
             <a class="text-link" href="{{ path_for(request, 'index') }}">View the full collection →</a>
           </section>
         {% else %}

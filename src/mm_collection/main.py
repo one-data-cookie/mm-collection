@@ -10,6 +10,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import date
 from pathlib import Path
+from urllib.parse import urlencode
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import (
@@ -35,6 +36,7 @@ from .database import (
     apply_migrations,
     database_path,
     get_item,
+    list_filter_options,
     list_items,
     update_item,
 )
@@ -43,6 +45,7 @@ PACKAGE_DIRECTORY = Path(__file__).parent
 STATIC_DIRECTORY = PACKAGE_DIRECTORY / "static"
 templates = Jinja2Templates(directory=PACKAGE_DIRECTORY / "templates")
 ISO_DATE_FIELDS = ("acquired",)
+FILTER_GROUPS = (("type", "Type"), ("location", "Location"), ("acquired", "Acquired"))
 INGRESS_PROXY_ADDRESSES = {"172.30.32.2", "127.0.0.1", "::1"}
 
 
@@ -73,6 +76,39 @@ def _validation_error(values: dict[str, str | None]) -> str | None:
     if values["type"] is not None and values["type"] not in ITEM_TYPES:
         return "Please select one of the available types."
     return _normalize_dates(values)
+
+
+def _filter_groups(
+    request: Request,
+    options: dict[str, list[str]],
+    query: str,
+    filters: dict[str, str],
+) -> list[dict[str, object]]:
+    """Build each filter's chips, linking to the page with that chip toggled."""
+    index_path = _path_for(request, "index")
+    options = {
+        **options,
+        "type": [value for value in ITEM_TYPES if value in options["type"]],
+    }
+    groups: list[dict[str, object]] = []
+    for name, label in FILTER_GROUPS:
+        chips = []
+        for value in options[name]:
+            active = filters[name] == value
+            parameters = {"q": query, **filters, name: "" if active else value}
+            query_string = urlencode({k: v for k, v in parameters.items() if v})
+            chips.append(
+                {
+                    "value": value,
+                    "active": active,
+                    "href": f"{index_path}?{query_string}"
+                    if query_string
+                    else index_path,
+                }
+            )
+        if chips:
+            groups.append({"label": label, "chips": chips})
+    return groups
 
 
 def _path_for(request: Request, name: str, **path_params: object) -> str:
@@ -145,10 +181,29 @@ def create_app(db_path: Path | None = None) -> FastAPI:
     @application.get("/", response_class=HTMLResponse, name="index")
     async def index(request: Request) -> HTMLResponse:
         query = request.query_params.get("q", "").strip()
+        filters = {
+            name: request.query_params.get(name, "").strip()
+            for name, _label in FILTER_GROUPS
+        }
+        items = list_items(
+            target,
+            query=query,
+            item_type=filters["type"],
+            location=filters["location"],
+            acquired_year=filters["acquired"],
+        )
         return templates.TemplateResponse(
             request=request,
             name="index.html",
-            context={"items": list_items(target, query=query), "query": query},
+            context={
+                "items": items,
+                "query": query,
+                "filters": filters,
+                "has_filters": any(filters.values()),
+                "filter_groups": _filter_groups(
+                    request, list_filter_options(target), query, filters
+                ),
+            },
         )
 
     @application.get("/items/new", response_class=HTMLResponse, name="new_item")

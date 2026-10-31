@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import sqlite3
 from collections.abc import Callable
@@ -152,12 +153,16 @@ def apply_migrations(path: Path | None = None) -> None:
 
 
 def list_items(
-    path: Path | None = None, query: str | None = None
+    path: Path | None = None,
+    query: str | None = None,
+    item_type: str | None = None,
+    location: str | None = None,
+    acquired_year: str | None = None,
 ) -> list[dict[str, object]]:
     """Return matching items newest first, with each primary display photo."""
     search = (query or "").strip()
-    where = ""
-    parameters: tuple[str, ...] = ()
+    conditions: list[str] = []
+    parameters: list[str] = []
     if search:
         escaped = (
             search.replace("\\", "\\\\")
@@ -165,8 +170,8 @@ def list_items(
             .replace("_", "\\_")
         )
         pattern = f"%{escaped}%"
-        where = """
-            WHERE (
+        conditions.append(
+            """(
                 items.title LIKE ? ESCAPE '\\'
                 OR COALESCE(items.author, '') LIKE ? ESCAPE '\\'
                 OR COALESCE(items.type, '') LIKE ? ESCAPE '\\'
@@ -177,9 +182,20 @@ def list_items(
                 OR COALESCE(items.origin, '') LIKE ? ESCAPE '\\'
                 OR COALESCE(items.story, '') LIKE ? ESCAPE '\\'
                 OR COALESCE(items.background, '') LIKE ? ESCAPE '\\'
-            )
-        """
-        parameters = (pattern,) * 10
+            )"""
+        )
+        parameters.extend([pattern] * 10)
+
+    for condition, value in (
+        ("items.type = ?", item_type),
+        ("items.location = ?", location),
+        ("substr(items.acquired, 1, 4) = ?", acquired_year),
+    ):
+        if value:
+            conditions.append(condition)
+            parameters.append(value)
+
+    where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
 
     with connect(path) as connection:
         rows = connection.execute(
@@ -195,6 +211,30 @@ def list_items(
             parameters,
         ).fetchall()
     return [dict(row) for row in rows]
+
+
+def list_filter_options(path: Path | None = None) -> dict[str, list[str]]:
+    """Return the distinct values in use for each collection filter."""
+    with connect(path) as connection:
+        row = connection.execute(
+            """
+            SELECT
+                json_group_array(DISTINCT NULLIF(type, '')) AS type,
+                json_group_array(DISTINCT NULLIF(location, '')) AS location,
+                json_group_array(DISTINCT NULLIF(substr(acquired, 1, 4), ''))
+                    AS acquired
+            FROM items
+            """
+        ).fetchone()
+    values = {
+        name: [value for value in json.loads(row[name]) if value]
+        for name in ("type", "location", "acquired")
+    }
+    return {
+        "type": values["type"],
+        "location": sorted(values["location"], key=str.casefold),
+        "acquired": sorted(values["acquired"], reverse=True),
+    }
 
 
 def get_item(item_id: int, path: Path | None = None) -> dict[str, object] | None:

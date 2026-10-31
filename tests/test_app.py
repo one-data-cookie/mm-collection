@@ -1,5 +1,7 @@
+import html
 import re
 from io import BytesIO
+from urllib.parse import parse_qs, urlsplit
 
 import pytest
 from fastapi.testclient import TestClient
@@ -59,6 +61,142 @@ def test_home_assistant_ingress_uses_same_origin_paths(tmp_path):
     assert script.status_code == 200
     assert redirect.status_code == 303
     assert redirect.headers["location"] == f"{ingress_path}/"
+
+
+def _seed_filterable_items(client):
+    for values in (
+        {
+            "title": "Blue vase",
+            "type": "Glass",
+            "location": "Obývák skříň",
+            "acquired": "2024-05-01",
+        },
+        {
+            "title": "Red jug",
+            "type": "Ceramics",
+            "location": "Obývák skříň",
+            "acquired": "2026-08-19",
+        },
+        {
+            "title": "Green bowl",
+            "type": "Ceramics",
+            "location": "attic",
+            "acquired": "2024-11-30",
+        },
+        {"title": "Wooden chair"},
+    ):
+        assert client.post(
+            "/items/new", data=values, follow_redirects=False
+        ).status_code == 303
+
+
+def _chips(page_text):
+    return [
+        html.unescape(href)
+        for href in re.findall(r'class="filter-chip" href="([^"]*)"', page_text)
+    ]
+
+
+def _chip_values(page_text):
+    return re.findall(r'class="filter-chip"[^>]*>([^<]*)</a>', page_text)
+
+
+@pytest.mark.parametrize(
+    ("params", "expected"),
+    [
+        ({"type": "Ceramics"}, {"Red jug", "Green bowl"}),
+        ({"location": "attic"}, {"Green bowl"}),
+        ({"acquired": "2024"}, {"Blue vase", "Green bowl"}),
+        ({"type": "Ceramics", "acquired": "2024"}, {"Green bowl"}),
+        ({"q": "jug", "type": "Ceramics"}, {"Red jug"}),
+        ({"q": "jug", "type": "Glass"}, set()),
+        ({"location": "%"}, set()),
+        ({"location": "attic", "type": " "}, {"Green bowl"}),
+    ],
+)
+def test_collection_filters_narrow_results(tmp_path, params, expected):
+    app = create_app(tmp_path / "collection.sqlite")
+    with TestClient(app) as client:
+        _seed_filterable_items(client)
+        page = client.get("/", params=params)
+
+    assert page.status_code == 200
+    found = set(re.findall(r'<h2><a href="[^"]*">([^<]*)</a></h2>', page.text))
+    assert found == expected
+
+
+def test_filter_chips_list_values_in_use_in_order(tmp_path):
+    app = create_app(tmp_path / "collection.sqlite")
+    with TestClient(app) as client:
+        assert 'class="collection-filters"' not in client.get("/").text
+        _seed_filterable_items(client)
+        unfiltered = client.get("/")
+        filtered = client.get("/", params={"type": "Glass"})
+
+    expected = [
+        "Ceramics", "Glass", "attic", "Obývák skříň", "2026", "2024",
+    ]
+    assert _chip_values(unfiltered.text) == expected
+    assert _chip_values(filtered.text) == expected
+
+
+def test_filter_chip_links_toggle_their_group_and_keep_the_rest(tmp_path):
+    app = create_app(tmp_path / "collection.sqlite")
+    with TestClient(app) as client:
+        _seed_filterable_items(client)
+        page = client.get("/", params={"q": "o", "type": "Ceramics"})
+        location_href = _chips(page.text)[3]
+        followed = client.get(location_href)
+
+    active = re.findall(
+        r'class="filter-chip" href="([^"]*)" aria-current="true">([^<]*)<', page.text
+    )
+    assert [(html.unescape(href), value) for href, value in active] == [
+        ("/?q=o", "Ceramics")
+    ]
+    assert parse_qs(urlsplit(location_href).query) == {
+        "q": ["o"],
+        "type": ["Ceramics"],
+        "location": ["Obývák skříň"],
+    }
+    assert followed.status_code == 200
+    assert 'aria-current="true">Obývák skříň</a>' in followed.text
+    assert "1 object found" in followed.text
+
+
+def test_clearing_the_only_active_filter_links_to_the_plain_index(tmp_path):
+    app = create_app(tmp_path / "collection.sqlite")
+    with TestClient(app) as client:
+        _seed_filterable_items(client)
+        page = client.get("/", params={"type": "Glass"})
+
+    assert 'class="filter-chip" href="/" aria-current="true">Glass<' in page.text
+    assert ">Clear all</a>" in page.text
+
+
+def test_search_form_keeps_active_filters(tmp_path):
+    app = create_app(tmp_path / "collection.sqlite")
+    with TestClient(app) as client:
+        _seed_filterable_items(client)
+        page = client.get("/", params={"type": "Glass", "acquired": "2024"})
+        plain = client.get("/")
+
+    assert '<input type="hidden" name="type" value="Glass">' in page.text
+    assert '<input type="hidden" name="acquired" value="2024">' in page.text
+    assert 'type="hidden"' not in plain.text
+
+
+def test_filter_with_no_results_shows_filter_empty_state(tmp_path):
+    app = create_app(tmp_path / "collection.sqlite")
+    with TestClient(app) as client:
+        _seed_filterable_items(client)
+        filtered = client.get("/", params={"type": "Textiles"})
+        searched = client.get("/", params={"q": "nothing-here"})
+
+    assert "Nothing matched these filters." in filtered.text
+    assert "0 objects found" in filtered.text
+    assert "Nothing matched “nothing-here”." in searched.text
+    assert ">Clear search</a>" in searched.text
 
 
 def test_collection_search_matches_metadata_and_preserves_the_query(tmp_path):
